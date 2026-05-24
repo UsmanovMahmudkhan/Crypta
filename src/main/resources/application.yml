@@ -13,3 +13,8 @@ server:
 security:
   webauthn:
     rp-id: ${WEBAUTHN_RP_ID:localhost}
+    rp-name: ${WEBAUTHN_RP_NAME:Sovereign Comm}
+    allowed-origins: ${WEBAUTHN_ALLOWED_ORIGINS:http://localhost:8080}
+app:
+  crypto:
+    plaintext-rejected: true
