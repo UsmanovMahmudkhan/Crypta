@@ -33,3 +33,8 @@ public class KeyController {
 
     @PostMapping("/signed-prekeys")
     void uploadSignedPreKey(@Valid @RequestBody PreKeyUploadRequest request) {
+        preKeyService.uploadSignedPreKey(request);
+    }
+
+    @PostMapping("/one-time-prekeys")
+    void uploadOneTimePreKey(@Valid @RequestBody PreKeyUploadRequest request) {
