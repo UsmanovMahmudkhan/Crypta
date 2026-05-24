@@ -238,3 +238,8 @@ CREATE TABLE admin_actions (
     action_type text NOT NULL,
     signed_action_envelope jsonb NOT NULL,
     approval_state text NOT NULL DEFAULT 'PENDING',
+    created_at timestamptz NOT NULL DEFAULT now(),
+    executed_at timestamptz
+);
+
+CREATE TABLE emergency_lockdowns (
