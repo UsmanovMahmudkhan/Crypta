@@ -33,3 +33,8 @@ Assumptions:
 Primary attacker goals:
 
 - Read message or attachment plaintext.
+- Replace identity/prekeys to man-in-the-middle conversations.
+- Add unauthorized devices to sensitive rooms.
+- Abuse admin console or support paths.
+- Infer sensitive activity from metadata.
+- Prevent key rotation or force downgrade away from PQXDH/MLS.
