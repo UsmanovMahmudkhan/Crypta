@@ -528,3 +528,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 
 ### `emergency_lockdown_ended`
 
+- Fields: `lockdownId`, `endedAt`, `policyVersion`.
+- Response: ack.
+- Authentication: server-to-device.
+- Authorization: affected devices.
+- Security notes: require fresh policy sync before resuming.
