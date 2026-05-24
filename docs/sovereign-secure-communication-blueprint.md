@@ -308,3 +308,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Response: empty success.
 - Authentication: device-bound session.
 - Authorization: own device only.
+- Security notes: signed by identity key; expire and rotate.
+- Failure cases: signature invalid, too many active prekeys.
+
+`POST /api/v1/keys/one-time-prekeys`
+
