@@ -348,3 +348,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Response: inclusion proof, consistency proof, signed tree head.
 - Authentication: active session.
 - Authorization: same org or allowed contact graph.
+- Security notes: client verifies proof before trusting key changes.
+- Failure cases: proof unavailable, tree head mismatch, org isolation violation.
+
+### Room Creation
+
