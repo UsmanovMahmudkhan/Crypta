@@ -813,3 +813,8 @@ Security tests:
 ## 23. Security Audit Checklist
 
 - No backend plaintext message or attachment fields.
+- Request/response logging disabled on sensitive routes.
+- All key uploads signature-verified.
+- Key transparency inclusion and consistency proofs verified by clients.
+- One-time prekeys claimed atomically.
+- PQXDH downgrade blocked.
