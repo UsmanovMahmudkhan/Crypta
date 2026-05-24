@@ -83,3 +83,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
 
     @Override
     public void acceptCiphertextEnvelope(String encryptedDirectMessageEnvelope) {
+    }
+
+    @Override
+    public IdResponse createMissionRoom(RoomCreateRequest request) {
+        return created();
