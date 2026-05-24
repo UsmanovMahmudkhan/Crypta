@@ -443,3 +443,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 
 `POST /api/v1/admin/emergency-lockdowns`
 
+- Request: `organizationId`, `roomId`, `reason`, `scope`.
+- Response: lockdown id in production.
+- Authentication: emergency admin step-up, optional break-glass dual approval.
+- Authorization: emergency permission.
+- Security notes: stops new sessions, room sends, attachment access, or device activity according to scope.
