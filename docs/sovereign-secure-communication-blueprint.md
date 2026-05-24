@@ -788,3 +788,8 @@ Backend tests:
 - Property tests for policy evaluation.
 - Race tests for one-time prekey claiming.
 - WebSocket authentication and delivery tests.
+- Audit hash-chain tamper tests.
+- Retention deletion tests.
+
+Mobile tests:
+
