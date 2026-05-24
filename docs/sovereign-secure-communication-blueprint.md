@@ -113,3 +113,8 @@ Backend invariants:
 
 - Reject any field named or shaped like `message_body`, `plaintext`, `file_plaintext`, or `decrypted_metadata`.
 - Enforce room/device policy before accepting ciphertext.
+- Never log request bodies for key, message, or attachment routes.
+- Use separate authorization checks for user, device, admin, and service actor.
+- Use tamper-evident audit hashes for admin and policy actions.
+
+## 7. Mobile Architecture
