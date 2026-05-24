@@ -108,3 +108,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
 
     @Override
     public void sendGenericNotification(UUID deviceId, String urgency) {
+    }
+
+    @Override
+    public IdResponse createEncryptedAttachment(AttachmentCreateRequest request) {
+        return created();
