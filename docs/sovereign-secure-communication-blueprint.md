@@ -273,3 +273,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 
 ### WebAuthn Login
 
+`POST /api/v1/webauthn/login/options/{userId}`
+
+- Request: path `userId`.
+- Response: challenge and allowed credentials.
+- Authentication: none before ceremony.
