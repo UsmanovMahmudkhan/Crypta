@@ -73,3 +73,8 @@ CREATE TABLE webauthn_credentials (
 
 CREATE TABLE identity_public_keys (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_id uuid NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    algorithm text NOT NULL,
+    public_key bytea NOT NULL,
+    signature bytea NOT NULL,
+    key_version integer NOT NULL,
