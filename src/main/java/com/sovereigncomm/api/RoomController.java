@@ -28,3 +28,8 @@ public class RoomController {
         return mlsGroupService.createMissionRoom(request);
     }
 
+    @PostMapping("/policy")
+    void updatePolicy(@Valid @RequestBody RoomPolicyUpdateRequest request) {
+        roomPolicyService.updatePolicy(request);
+    }
+
