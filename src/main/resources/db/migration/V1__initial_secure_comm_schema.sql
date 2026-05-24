@@ -103,3 +103,8 @@ CREATE TABLE one_time_prekeys (
     public_key bytea NOT NULL,
     claimed_at timestamptz,
     created_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (device_id, key_id)
+);
+
+CREATE TABLE pq_prekeys (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
