@@ -13,3 +13,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
         PreKeyService, KeyTransparencyService, DirectMessageService, GroupMessageService, MLSGroupService,
         RoomPolicyService, DeliveryService, NotificationService, AttachmentService, AuditService,
         AdminGovernanceService, MDMIntegrationService, SIEMExportService, EmergencyLockdownService {
+
+    @Override
+    public WebAuthnStartResponse startWebAuthnRegistration(UUID userId) {
+        return new WebAuthnStartResponse("scaffold-challenge", Map.of("userId", userId));
+    }
