@@ -148,3 +148,8 @@ Direct messaging:
 - Clients must fail closed on downgrade from PQXDH where a recipient device advertises PQ support.
 
 Group messaging:
+
+- Use MLS per RFC 9420 for mission rooms.
+- Treat room membership changes as MLS commits with epoch transitions.
+- Server stores MLS public group metadata and opaque MLS messages only; clients verify group state.
+
