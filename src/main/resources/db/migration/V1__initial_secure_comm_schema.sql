@@ -203,3 +203,8 @@ CREATE TABLE encrypted_attachments (
     ciphertext_sha256 bytea NOT NULL,
     ciphertext_bytes bigint NOT NULL,
     crypto_metadata jsonb NOT NULL,
+    retention_expires_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    deleted_at timestamptz
+);
+
