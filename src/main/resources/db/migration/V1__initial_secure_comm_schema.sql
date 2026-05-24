@@ -293,3 +293,6 @@ CREATE INDEX idx_messages_recipient_device ON encrypted_messages(recipient_devic
 CREATE INDEX idx_messages_room ON encrypted_messages(room_id, server_received_at) WHERE deleted_at IS NULL;
 CREATE INDEX idx_messages_expiry ON encrypted_messages(expires_at) WHERE expires_at IS NOT NULL;
 CREATE INDEX idx_attachments_room ON encrypted_attachments(room_id, created_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_audit_org_time ON audit_events(organization_id, created_at);
+CREATE INDEX idx_admin_actions_org_state ON admin_actions(organization_id, approval_state);
+CREATE INDEX idx_lockdowns_active ON emergency_lockdowns(organization_id, room_id) WHERE ended_at IS NULL;
