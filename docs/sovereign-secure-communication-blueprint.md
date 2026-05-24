@@ -553,3 +553,8 @@ Mitigations:
 - Key substitution: client detects unexpected key changes or missing log inclusion.
 - Split-view attack: require gossip/monitoring, checkpoint pinning, and SIEM alerting on inconsistent tree heads.
 - Malicious admin: admin can request key actions but cannot forge device signatures or hide append-only evidence if monitors are effective.
+
+Hard truth: key transparency is only valuable if clients actually verify proofs and independent monitors watch the log.
+
+## 13. Secure File Storage Design
+
