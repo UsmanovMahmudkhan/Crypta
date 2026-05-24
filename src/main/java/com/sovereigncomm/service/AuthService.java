@@ -2,12 +2,13 @@ package com.sovereigncomm.service;
 
 import com.sovereigncomm.api.dto.CommonDtos.WebAuthnFinishRequest;
 import com.sovereigncomm.api.dto.CommonDtos.WebAuthnStartResponse;
+import com.sovereigncomm.api.dto.CommonDtos.SessionResponse;
 
 import java.util.UUID;
 
 public interface AuthService {
     WebAuthnStartResponse startWebAuthnRegistration(UUID userId);
-    void finishWebAuthnRegistration(WebAuthnFinishRequest request);
+    SessionResponse finishWebAuthnRegistration(WebAuthnFinishRequest request);
     WebAuthnStartResponse startWebAuthnLogin(UUID userId);
-    void finishWebAuthnLogin(WebAuthnFinishRequest request);
+    SessionResponse finishWebAuthnLogin(WebAuthnFinishRequest request);
 }
