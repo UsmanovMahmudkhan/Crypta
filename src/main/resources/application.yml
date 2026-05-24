@@ -18,3 +18,5 @@ security:
 app:
   crypto:
     plaintext-rejected: true
+  notifications:
+    plaintext-previews-enabled: false
