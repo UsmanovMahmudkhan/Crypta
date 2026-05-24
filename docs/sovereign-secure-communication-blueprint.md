@@ -768,3 +768,8 @@ Initial scaffold:
 ## 21. Initial Code Scaffolding
 
 Implemented starter files:
+
+- Spring Boot application entrypoint: [SovereignCommApplication.java](/Users/mahmudkhonusmonov/Documents/java/src/main/java/com/sovereigncomm/SovereignCommApplication.java)
+- Security defaults: [SecurityConfig.java](/Users/mahmudkhonusmonov/Documents/java/src/main/java/com/sovereigncomm/config/SecurityConfig.java)
+- REST controllers for orgs, users, devices, WebAuthn, keys, rooms, attachments, admin.
+- Backend service contracts for all required service modules.
