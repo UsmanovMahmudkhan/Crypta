@@ -468,3 +468,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 - Fields: `messageId`, `roomId`, `mlsGroupId`, `epoch`, `senderDeviceId`, `ciphertext`, `cryptoMetadata`.
 - Response: ack `messageId`, `acceptedAt`.
 - Authentication: active verified device.
+- Authorization: active room member and allowed device.
+- Security notes: enforce policy before persistence.
+- Failure cases: stale epoch, removed member, lockdown active.
+
+### `delivery_receipt`
