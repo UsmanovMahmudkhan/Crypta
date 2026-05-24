@@ -373,3 +373,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Security notes: creates new policy version and room event; may trigger MLS commit.
 - Failure cases: weaker-than-baseline policy, missing approval, active legal/lockdown conflict.
 
+### Member Invite
+
+`POST /api/v1/mission-rooms/members/invite`
+
+- Request: `roomId`, `userId`, `allowedDeviceIds`, `reason`.
