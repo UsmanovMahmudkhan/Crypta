@@ -623,3 +623,8 @@ Sinks:
 
 ## 16. Emergency Lockdown Design
 
+Scopes:
+
+- Organization-wide: block new sends, key uploads, attachment downloads, admin changes except break-glass.
+- Room-level: freeze membership, block sends/downloads, require MLS state resync after unlock.
+- User/device-level: revoke sessions, require re-verification, optionally remote wipe.
