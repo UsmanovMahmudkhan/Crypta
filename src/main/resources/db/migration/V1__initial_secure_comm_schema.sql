@@ -163,3 +163,8 @@ CREATE TABLE room_policies (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     room_id uuid NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
     min_device_trust text NOT NULL,
+    retention_days integer,
+    auto_delete_seconds integer,
+    attachments_allowed boolean NOT NULL DEFAULT true,
+    screenshot_restriction text NOT NULL DEFAULT 'BEST_EFFORT',
+    forwarding_allowed boolean NOT NULL DEFAULT false,
