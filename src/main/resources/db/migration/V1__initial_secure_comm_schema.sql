@@ -218,3 +218,8 @@ CREATE TABLE message_delivery_receipts (
 );
 
 CREATE TABLE audit_events (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id uuid NOT NULL REFERENCES organizations(id),
+    actor_user_id uuid REFERENCES users(id),
+    actor_device_id uuid REFERENCES devices(id),
+    event_type text NOT NULL,
