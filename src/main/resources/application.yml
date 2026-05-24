@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: sovereign-comm-platform
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/sovereign_comm}
