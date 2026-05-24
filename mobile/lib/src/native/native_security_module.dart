@@ -18,3 +18,8 @@ abstract interface class DeviceAttestationProvider {
 
 abstract interface class BiometricUnlockProvider {
   Future<bool> unlockForSensitiveAction({required String localizedReason});
+}
+
+abstract interface class SecureScreenProvider {
+  Future<void> enableSecureScreen();
+  Future<void> disableSecureScreenForAllowedViews();
