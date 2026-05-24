@@ -38,3 +38,8 @@ public class KeyController {
 
     @PostMapping("/one-time-prekeys")
     void uploadOneTimePreKey(@Valid @RequestBody PreKeyUploadRequest request) {
+        preKeyService.uploadOneTimePreKey(request);
+    }
+
+    @PostMapping("/pq-prekeys")
+    void uploadPqPreKey(@Valid @RequestBody PreKeyUploadRequest request) {
