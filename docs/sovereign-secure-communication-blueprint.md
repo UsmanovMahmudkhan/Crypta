@@ -398,3 +398,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 ### Encrypted Attachment Upload
 
 `POST /api/v1/attachments`
+
+- Request: `roomId`, `objectKey`, `ciphertextSha256`, `ciphertextBytes`, `cryptoMetadata`.
+- Response: `id`, `createdAt`, production presigned upload URL.
+- Authentication: active verified device.
+- Authorization: room attachment policy.
