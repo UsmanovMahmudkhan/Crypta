@@ -8,3 +8,8 @@ services:
     image: postgres:16-alpine
     container_name: sovereign-db
     environment:
+      POSTGRES_DB: sovereign_comm
+      POSTGRES_USER: sovereign_comm
+      POSTGRES_PASSWORD: sovereign_comm
+    ports:
+      - "5433:5432"
