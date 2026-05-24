@@ -68,3 +68,8 @@ CREATE TABLE webauthn_credentials (
     backup_eligible boolean,
     backup_state boolean,
     created_at timestamptz NOT NULL DEFAULT now(),
+    last_used_at timestamptz
+);
+
+CREATE TABLE identity_public_keys (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
