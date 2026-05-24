@@ -713,3 +713,8 @@ Phase 2: Direct E2EE messaging with Signal-style provider interface.
 - Integrate audited provider or native bridge; key bundles, prekeys, ciphertext APIs, no plaintext backend.
 
 Phase 3: WebSocket delivery, offline queue, Redis events, encrypted local storage.
+
+- Device WebSocket sessions, offline envelopes, delivery receipts, local encrypted DB.
+
+Phase 4: Key transparency log and device verification.
+
