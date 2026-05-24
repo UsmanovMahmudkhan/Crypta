@@ -268,3 +268,8 @@ CREATE TABLE mdm_devices (
     UNIQUE (organization_id, mdm_provider, external_device_id)
 );
 
+CREATE TABLE siem_exports (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id uuid NOT NULL REFERENCES organizations(id),
+    sink_type text NOT NULL,
+    sink_config_ref text NOT NULL,
