@@ -223,3 +223,8 @@ CREATE TABLE audit_events (
     actor_user_id uuid REFERENCES users(id),
     actor_device_id uuid REFERENCES devices(id),
     event_type text NOT NULL,
+    target_type text,
+    target_id uuid,
+    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+    previous_event_hash bytea,
+    event_hash bytea NOT NULL,
