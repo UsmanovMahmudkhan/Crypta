@@ -3,3 +3,8 @@ version: '3.8'
 services:
   # ==============================================================================
   # Database Service (PostgreSQL 16)
+  # ==============================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: sovereign-db
+    environment:
