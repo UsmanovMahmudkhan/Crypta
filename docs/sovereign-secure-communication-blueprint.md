@@ -748,3 +748,8 @@ Initial scaffold:
 .
 ├── docs/
 │   └── sovereign-secure-communication-blueprint.md
+├── mobile/
+│   ├── README.md
+│   └── lib/src/
+│       ├── domain/crypto_provider_contracts.dart
+│       └── native/native_security_module.dart
