@@ -18,3 +18,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/keys")
 public class KeyController {
+    private final KeyService keyService;
+    private final PreKeyService preKeyService;
+
+    public KeyController(KeyService keyService, PreKeyService preKeyService) {
+        this.keyService = keyService;
