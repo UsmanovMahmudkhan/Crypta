@@ -24,7 +24,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/v1/webauthn/**").permitAll()
                         .requestMatchers("/api/v1/organizations", "/api/v1/users").hasAnyRole("PLATFORM_OPERATOR", "ORG_ADMIN")
-                        .requestMatchers("/api/v1/admin/**").hasAnyRole("PLATFORM_OPERATOR", "ORG_ADMIN")
+                        .requestMatchers("/api/v1/admin/**", "/api/v1/governance/**").hasAnyRole("PLATFORM_OPERATOR", "ORG_ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(apiAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

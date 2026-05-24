@@ -173,3 +173,21 @@ Implemented with:
 * [Dockerfile](Dockerfile)
 * [docker-compose.yml](docker-compose.yml)
 * [k8s/base/](k8s/base/)
+
+### Compliance Query Language (CQL) & Smalltalk Rules Engine
+
+The platform integrates a dynamic governance plane for real-time compliance auditing and rule-based policy enforcement:
+
+* **Compliance Query Language (CQL)**: An ANTLR4-parsed, SQL-inspired language designed specifically for secure querying of `AUDIT_EVENTS`, `DEVICES`, and `ROOMS`.
+  * Grammar: [CQL.g4](src/main/antlr4/com/sovereigncomm/cql/CQL.g4)
+  * Compiler / Service: [CqlPolicyService](src/main/java/com/sovereigncomm/cql/CqlPolicyService.java)
+  * Example Query: `SELECT id, event_type FROM AUDIT_EVENTS WHERE event_type = 'AUDIT_EXPORT_REQUESTED'`
+* **Smalltalk Policy Engine**: A highly flexible, lightweight Smalltalk message-passing engine embedded within the Java policy layer to evaluate compliance rules with block evaluations (`[ :param | ... ]`).
+  * Engine: [SmalltalkEngine](src/main/java/com/sovereigncomm/smalltalk/SmalltalkEngine.java)
+  * Service: [SmalltalkService](src/main/java/com/sovereigncomm/smalltalk/SmalltalkService.java)
+  * Example Script: `[ :device | device platform = 'iOS' ]`
+* **Governance REST Endpoints**:
+  * `POST /api/v1/governance/cql/parse` - Parse CQL query string to abstract AST representation.
+  * `POST /api/v1/governance/cql/execute` - Execute secure CQL query against database audit tables.
+  * `POST /api/v1/governance/smalltalk/evaluate` - Evaluate Smalltalk block against target object contexts dynamically.
+
