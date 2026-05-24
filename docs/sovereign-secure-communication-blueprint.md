@@ -203,3 +203,8 @@ Tables included:
 - `admin_actions`
 - `emergency_lockdowns`
 - `mdm_devices`
+- `siem_exports`
+
+Schema rules:
+
+- No plaintext `message_body` column.
