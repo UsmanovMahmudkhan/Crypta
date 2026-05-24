@@ -43,3 +43,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     }
 
     @Override
+    public IdResponse registerDevice(DeviceRegisterRequest request) {
+        return created();
+    }
+
+    @Override
