@@ -13,3 +13,8 @@ public final class CommonDtos {
     }
 
     public record IdResponse(UUID id, Instant createdAt) {
+    }
+
+    public record OrganizationCreateRequest(@NotBlank String name, @NotBlank String jurisdiction, String externalTenantId) {
+    }
+
