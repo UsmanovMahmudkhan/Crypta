@@ -98,3 +98,8 @@ CREATE TABLE signed_prekeys (
 CREATE TABLE one_time_prekeys (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     device_id uuid NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    key_id text NOT NULL,
+    algorithm text NOT NULL,
+    public_key bytea NOT NULL,
+    claimed_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
