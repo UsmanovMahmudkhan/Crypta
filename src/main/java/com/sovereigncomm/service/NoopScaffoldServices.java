@@ -48,3 +48,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     }
 
     @Override
+    public void revokeDevice(UUID deviceId, String reason) {
+    }
+
+    @Override
+    public void uploadIdentityKey(PublicKeyUploadRequest request) {
