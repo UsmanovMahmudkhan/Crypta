@@ -1,9 +1,11 @@
 package com.sovereigncomm.api;
 
 import com.sovereigncomm.api.dto.CommonDtos.KeyBundleResponse;
+import com.sovereigncomm.api.dto.CommonDtos.KeyTransparencyProofResponse;
 import com.sovereigncomm.api.dto.CommonDtos.PreKeyUploadRequest;
 import com.sovereigncomm.api.dto.CommonDtos.PublicKeyUploadRequest;
 import com.sovereigncomm.service.KeyService;
+import com.sovereigncomm.service.KeyTransparencyService;
 import com.sovereigncomm.service.PreKeyService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,10 +22,12 @@ import java.util.UUID;
 public class KeyController {
     private final KeyService keyService;
     private final PreKeyService preKeyService;
+    private final KeyTransparencyService keyTransparencyService;
 
-    public KeyController(KeyService keyService, PreKeyService preKeyService) {
+    public KeyController(KeyService keyService, PreKeyService preKeyService, KeyTransparencyService keyTransparencyService) {
         this.keyService = keyService;
         this.preKeyService = preKeyService;
+        this.keyTransparencyService = keyTransparencyService;
     }
 
     @PostMapping("/identity")
@@ -49,5 +53,10 @@ public class KeyController {
     @GetMapping("/bundle/{userId}")
     KeyBundleResponse keyBundle(@PathVariable UUID userId) {
         return keyService.fetchKeyBundle(userId);
+    }
+
+    @GetMapping("/transparency/{userId}")
+    KeyTransparencyProofResponse keyTransparencyProof(@PathVariable UUID userId) {
+        return keyTransparencyService.proofResponse(userId);
     }
 }
