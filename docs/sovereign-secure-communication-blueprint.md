@@ -723,3 +723,8 @@ Phase 4: Key transparency log and device verification.
 Phase 5: Encrypted attachments and object storage.
 
 - Client encryption, wrapped keys, presigned upload/download, retention.
+
+Phase 6: Mission rooms and policy engine.
+
+- Classification, verified-device controls, screenshot best-effort, forwarding restrictions, auto-delete, legal hold metadata mode.
+
