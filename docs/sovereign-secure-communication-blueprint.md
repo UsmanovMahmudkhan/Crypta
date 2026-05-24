@@ -178,3 +178,8 @@ External audit required:
 
 ## 9. Database Schema
 
+The initial PostgreSQL schema is implemented in [V1__initial_secure_comm_schema.sql](/Users/mahmudkhonusmonov/Documents/java/src/main/resources/db/migration/V1__initial_secure_comm_schema.sql).
+
+Tables included:
+
+- `organizations`
