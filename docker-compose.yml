@@ -48,3 +48,5 @@ services:
 # Persistent Volumes Configuration
 # ==============================================================================
 volumes:
+  pgdata:
+    driver: local
