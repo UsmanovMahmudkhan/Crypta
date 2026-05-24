@@ -223,3 +223,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 `POST /api/v1/organizations`
 
 - Request: `name`, `jurisdiction`, `externalTenantId`.
+- Response: `id`, `createdAt`.
+- Authentication: bootstrap owner or platform operator.
+- Authorization: tenant creation permission.
+- Security notes: creates first audit root; no default weak policy.
+- Failure cases: duplicate tenant, invalid jurisdiction, unauthorized bootstrap actor.
