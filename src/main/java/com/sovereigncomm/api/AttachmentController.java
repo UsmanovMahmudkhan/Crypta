@@ -28,3 +28,8 @@ public class AttachmentController {
         return attachmentService.createEncryptedAttachment(request);
     }
 
+    @GetMapping("/{attachmentId}/download")
+    Map<String, Object> createDownload(@PathVariable UUID attachmentId) {
+        return attachmentService.createEncryptedDownload(attachmentId);
+    }
+}
