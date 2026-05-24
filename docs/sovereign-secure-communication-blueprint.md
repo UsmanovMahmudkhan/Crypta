@@ -243,3 +243,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 ### Device Registration
 
 `POST /api/v1/devices`
+
+- Request: `userId`, `platform`, `deviceName`, `attestationFormat`, `attestationObjectBase64`, `deviceSigningPublicKeyBase64`.
+- Response: `id`, `createdAt`.
+- Authentication: user WebAuthn ceremony plus existing device approval for high-risk orgs.
+- Authorization: user can add own device subject to org policy.
