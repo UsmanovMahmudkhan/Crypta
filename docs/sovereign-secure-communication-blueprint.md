@@ -728,3 +728,8 @@ Phase 6: Mission rooms and policy engine.
 
 - Classification, verified-device controls, screenshot best-effort, forwarding restrictions, auto-delete, legal hold metadata mode.
 
+Phase 7: MLS group encryption.
+
+- MLS provider integration, group lifecycle, welcome/commit handling, membership change key rotation.
+
+Phase 8: MDM, SIEM, emergency lockdown.
