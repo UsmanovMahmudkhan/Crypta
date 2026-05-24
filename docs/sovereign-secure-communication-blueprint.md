@@ -128,3 +128,8 @@ Flutter layers:
 - Crypto bridge: `DirectCryptoProvider`, `GroupCryptoProvider`, `KeyTransparencyVerifier`.
 - Secure storage: `SecureStorageProvider` backed by native modules.
 - WebSocket layer: device-authenticated realtime encrypted envelope stream.
+- Local encrypted database: SQLCipher/Drift or native encrypted storage, storing ciphertext and local indexes only.
+- Notification layer: generic push handling and local unlock flow.
+
+Native module boundaries:
+
