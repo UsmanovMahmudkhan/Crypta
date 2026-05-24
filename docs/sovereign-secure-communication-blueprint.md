@@ -233,3 +233,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 
 `POST /api/v1/users`
 
+- Request: `organizationId`, `email`, `displayName`, `roles`.
+- Response: `id`, `createdAt`.
+- Authentication: admin WebAuthn session.
+- Authorization: org admin with user-management permission.
+- Security notes: invite only; no password fallback.
