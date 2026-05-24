@@ -423,3 +423,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 
 - Request: signed admin action envelope.
 - Response: action id and approval state in production.
+- Authentication: admin WebAuthn step-up.
+- Authorization: least-privilege admin role.
+- Security notes: signed action, dual-control for destructive operations, tamper-evident audit.
+- Failure cases: invalid signature, missing approval, policy forbids action.
+
