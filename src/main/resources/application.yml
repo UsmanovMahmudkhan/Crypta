@@ -8,3 +8,8 @@ spring:
   flyway:
     enabled: true
 server:
+  port: ${PORT:8080}
+  shutdown: graceful
+security:
+  webauthn:
+    rp-id: ${WEBAUTHN_RP_ID:localhost}
