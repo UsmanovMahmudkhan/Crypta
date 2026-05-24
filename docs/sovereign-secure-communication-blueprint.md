@@ -228,3 +228,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Authorization: tenant creation permission.
 - Security notes: creates first audit root; no default weak policy.
 - Failure cases: duplicate tenant, invalid jurisdiction, unauthorized bootstrap actor.
+
+### User Registration
+
+`POST /api/v1/users`
+
