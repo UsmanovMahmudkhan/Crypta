@@ -18,3 +18,8 @@ public class DeviceController {
         this.deviceTrustService = deviceTrustService;
     }
 
+    @PostMapping
+    IdResponse register(@Valid @RequestBody DeviceRegisterRequest request) {
+        return deviceTrustService.registerDevice(request);
+    }
+}
