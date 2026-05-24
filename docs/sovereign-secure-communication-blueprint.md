@@ -318,3 +318,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Authentication: device-bound session.
 - Authorization: own device only.
 - Security notes: claim atomically once.
+- Failure cases: duplicate key id, quota exceeded.
+
+`POST /api/v1/keys/pq-prekeys`
+
+- Request: `deviceId`, `keyId`, `algorithm`, `publicKeyBase64`, `signatureBase64`.
