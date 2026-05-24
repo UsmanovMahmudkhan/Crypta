@@ -93,3 +93,8 @@ Required services:
 - `UserService`: users, lifecycle, roles.
 - `DeviceTrustService`: device registration, attestation verification, verified/revoked state.
 - `KeyService`: identity public key upload, key bundle fetch, key state.
+- `PreKeyService`: signed prekeys, one-time prekeys, PQ prekeys.
+- `KeyTransparencyService`: append key events, expose inclusion/consistency proofs.
+- `DirectMessageService`: accept and persist direct ciphertext envelopes only.
+- `GroupMessageService`: accept and persist MLS ciphertext envelopes only.
+- `MLSGroupService`: room-to-MLS group lifecycle, membership state, commit envelope delivery.
