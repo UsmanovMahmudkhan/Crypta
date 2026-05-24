@@ -278,3 +278,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Request: path `userId`.
 - Response: challenge and allowed credentials.
 - Authentication: none before ceremony.
+- Authorization: login allowed for active user.
+- Security notes: generic errors to reduce enumeration.
+- Failure cases: user disabled, too many attempts, org lockdown.
+
+`POST /api/v1/webauthn/login/finish`
