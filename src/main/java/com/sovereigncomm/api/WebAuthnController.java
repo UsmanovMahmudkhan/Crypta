@@ -38,3 +38,6 @@ public class WebAuthnController {
 
     @PostMapping("/login/finish")
     void finishLogin(@Valid @RequestBody WebAuthnFinishRequest request) {
+        authService.finishWebAuthnLogin(request);
+    }
+}
