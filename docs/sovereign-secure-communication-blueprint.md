@@ -683,3 +683,8 @@ Risk: admin abuse.
 Risk: MLS implementation mistakes.
 
 - Mitigation: audited MLS library, conformance tests, external cryptographic review, epoch-state fuzzing.
+
+Risk: legal hold pressure weakens E2EE.
+
+- Mitigation: v1 legal hold preserves ciphertext and audit metadata only; any plaintext escrow is a separately branded enterprise mode with explicit warnings.
+
