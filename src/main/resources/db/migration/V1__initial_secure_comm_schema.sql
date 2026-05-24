@@ -133,3 +133,8 @@ CREATE TABLE key_transparency_entries (
     signed_tree_head bytea NOT NULL,
     inclusion_proof jsonb,
     created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE rooms (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id uuid NOT NULL REFERENCES organizations(id),
