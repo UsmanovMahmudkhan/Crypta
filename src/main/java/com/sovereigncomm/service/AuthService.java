@@ -8,3 +8,6 @@ import java.util.UUID;
 public interface AuthService {
     WebAuthnStartResponse startWebAuthnRegistration(UUID userId);
     void finishWebAuthnRegistration(WebAuthnFinishRequest request);
+    WebAuthnStartResponse startWebAuthnLogin(UUID userId);
+    void finishWebAuthnLogin(WebAuthnFinishRequest request);
+}
