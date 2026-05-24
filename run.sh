@@ -52,3 +52,8 @@ while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
         break
     fi
     
+    sleep 3
+    ((ATTEMPT++))
+done
+
+if [ "$HEALTHY" = false ]; then
