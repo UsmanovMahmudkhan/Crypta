@@ -23,3 +23,8 @@ The hardest parts are cryptographic correctness, device compromise recovery, key
 Assumptions:
 
 - Networks are monitored and actively attacked.
+- Backend, PostgreSQL, Redis, and object storage can leak.
+- Administrators and insiders can be malicious.
+- Push notification providers are untrusted.
+- User devices can be stolen, phished, jailbroken, rooted, or malware-infected.
+- Attackers may attempt public-key substitution and harvest encrypted traffic for later cryptanalysis.
