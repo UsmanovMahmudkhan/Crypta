@@ -18,3 +18,8 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sovereign_comm -d sovereign_comm"]
       interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==============================================================================
