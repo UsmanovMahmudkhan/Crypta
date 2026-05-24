@@ -658,3 +658,8 @@ Operational controls:
 - Separate production/admin networks.
 - Just-in-time admin access.
 - Break-glass accounts with hardware security keys.
+- Mandatory audit export and alerting.
+- Disaster recovery tested with encrypted backup restore.
+
+## 18. Security Risks and Mitigations
+
