@@ -428,3 +428,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Security notes: signed action, dual-control for destructive operations, tamper-evident audit.
 - Failure cases: invalid signature, missing approval, policy forbids action.
 
+### Audit Export
+
+`POST /api/v1/admin/audit/export`
+
+- Request: `organizationId`, `sinkType`, `from`, `to`.
