@@ -438,3 +438,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Authorization: audit export permission.
 - Security notes: exports metadata/admin/security events, never message plaintext.
 - Failure cases: sink unavailable, invalid range, legal restriction.
+
+### Emergency Lockdown
+
+`POST /api/v1/admin/emergency-lockdowns`
+
