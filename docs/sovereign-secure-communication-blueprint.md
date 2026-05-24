@@ -213,3 +213,8 @@ Schema rules:
 - Crypto metadata is separate JSONB and must contain no plaintext user content.
 - Retention is represented with `expires_at`, `retention_expires_at`, and policy versions.
 - Soft delete is limited to message/attachment lifecycle where retention policy allows it; audit and key transparency entries are append-only.
+
+## 10. API Design
+
+All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate limiting, structured audit, and body logging disabled for sensitive routes.
+
