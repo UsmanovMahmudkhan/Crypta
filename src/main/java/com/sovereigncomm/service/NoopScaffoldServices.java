@@ -73,3 +73,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     }
 
     @Override
+    public void appendKeyEvent(UUID deviceId, String canonicalEntryJson, String entrySignatureBase64) {
+    }
+
+    @Override
+    public Map<String, Object> proof(UUID userId) {
