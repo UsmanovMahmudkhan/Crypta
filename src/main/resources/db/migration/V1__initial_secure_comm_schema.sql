@@ -153,3 +153,8 @@ CREATE TABLE room_members (
     room_id uuid NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
     user_id uuid NOT NULL REFERENCES users(id),
     role text NOT NULL DEFAULT 'MEMBER',
+    membership_state text NOT NULL DEFAULT 'ACTIVE',
+    joined_at timestamptz NOT NULL DEFAULT now(),
+    removed_at timestamptz,
+    PRIMARY KEY (room_id, user_id)
+);
