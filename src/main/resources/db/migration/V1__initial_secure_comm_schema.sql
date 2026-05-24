@@ -118,3 +118,8 @@ CREATE TABLE pq_prekeys (
     expires_at timestamptz,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (device_id, key_id)
+);
+
+CREATE TABLE key_transparency_entries (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id uuid NOT NULL REFERENCES organizations(id),
