@@ -8,3 +8,8 @@ RED='\033[0;31m'
 NC='\033[0;m' # No Color
 
 echo -e "${BLUE}======================================================${NC}"
+echo -e "${BLUE}  Sovereign Communication Platform - Local Deployer   ${NC}"
+echo -e "${BLUE}======================================================${NC}"
+
+# Ensure docker daemon is running
+if ! docker info > /dev/null 2>&1; then
