@@ -593,3 +593,8 @@ Providers:
 - Microsoft Intune, Jamf, VMware Workspace ONE, MobileIron/Ivanti, Android Enterprise, Apple Business Manager integrations.
 
 Enforcement:
+
+- MDM state informs `devices.mdm_compliant`.
+- Sensitive rooms require verified device plus compliant MDM state.
+- Noncompliant devices lose room access and attachment download until remediated.
+
