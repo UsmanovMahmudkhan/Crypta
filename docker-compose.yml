@@ -13,3 +13,8 @@ services:
       POSTGRES_PASSWORD: sovereign_comm
     ports:
       - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sovereign_comm -d sovereign_comm"]
+      interval: 5s
