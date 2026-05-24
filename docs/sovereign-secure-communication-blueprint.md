@@ -58,3 +58,8 @@ Primary attacker goals:
 - Do not claim the product is unhackable, military-grade, or immune to endpoint compromise.
 - Do not implement Signal Protocol, PQXDH, MLS, AEADs, KDFs, signatures, or Merkle-tree security from scratch in product code.
 - Do not support plaintext recovery for users who lose all verified devices unless enterprise escrow is explicitly chosen with clear loss of E2EE guarantees.
+- Do not promise prevention of external leaks, photography of screens, malware capture, or all screenshots on every OS.
+- Do not make legal hold silently decrypt content. Legal hold can preserve ciphertext and metadata; plaintext legal hold requires a separate, explicit enterprise key escrow model and is not recommended for v1.
+
+## 5. Full System Architecture
+
