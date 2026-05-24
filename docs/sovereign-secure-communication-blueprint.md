@@ -158,3 +158,8 @@ Attachments:
 - Client generates random content encryption key.
 - Client encrypts file locally with AEAD using room/message associated data.
 - Content key is wrapped per recipient/session/group using E2EE mechanisms.
+- Server stores ciphertext blob and crypto metadata only.
+
+Required provider interfaces:
+
+- `DirectCryptoProvider`
