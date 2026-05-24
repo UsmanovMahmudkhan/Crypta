@@ -28,3 +28,8 @@ abstract interface class SecureScreenProvider {
 class DeviceAttestationResult {
   const DeviceAttestationResult({
     required this.format,
+    required this.attestationObject,
+    required this.hardwareBacked,
+    required this.strongBoxOrSecureEnclave,
+  });
+
