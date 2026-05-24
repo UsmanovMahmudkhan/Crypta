@@ -18,3 +18,8 @@ import java.util.UUID;
 @RequestMapping("/api/v1/attachments")
 public class AttachmentController {
     private final AttachmentService attachmentService;
+
+    public AttachmentController(AttachmentService attachmentService) {
+        this.attachmentService = attachmentService;
+    }
+
