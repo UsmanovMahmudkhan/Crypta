@@ -27,3 +27,8 @@ public class AdminController {
     @PostMapping("/actions")
     void recordAction(@RequestBody String signedAdminActionEnvelope) {
         adminGovernanceService.recordSignedAction(signedAdminActionEnvelope);
+    }
+
+    @PostMapping("/audit/export")
+    void exportAudit(@Valid @RequestBody AuditExportRequest request) {
+        auditService.exportAudit(request);
