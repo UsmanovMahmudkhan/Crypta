@@ -163,3 +163,8 @@ Attachments:
 Required provider interfaces:
 
 - `DirectCryptoProvider`
+- `GroupCryptoProvider`
+- `KeyTransparencyVerifier`
+- `SecureStorageProvider`
+- `DeviceAttestationProvider`
+
