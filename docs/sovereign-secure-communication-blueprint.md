@@ -823,3 +823,8 @@ Security tests:
 - Device revocation wipes local secrets where OS permits.
 - Push payloads contain no plaintext preview.
 - Admin actions are signed, least-privileged, and audited.
+- SIEM exports contain no content plaintext.
+- Backups contain ciphertext only and are access-controlled.
+- Mobile native modules reviewed by iOS/Android security specialists.
+- External cryptographic review completed before production.
+
