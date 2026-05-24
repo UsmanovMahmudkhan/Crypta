@@ -8,3 +8,8 @@ CREATE TABLE organizations (
     external_tenant_id text,
     status text NOT NULL DEFAULT 'ACTIVE',
     created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE users (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
