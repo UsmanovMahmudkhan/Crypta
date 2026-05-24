@@ -393,3 +393,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Authentication: room admin step-up.
 - Authorization: remove permission.
 - Security notes: must trigger MLS commit and epoch change; removed devices stop receiving new messages.
+- Failure cases: missing commit, target is last owner, lockdown constraints.
+
+### Encrypted Attachment Upload
+
+`POST /api/v1/attachments`
