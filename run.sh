@@ -67,3 +67,8 @@ fi
 echo -e "\n${YELLOW}[4/4] Verifying API availability...${NC}"
 echo -e "Testing mock WebAuthn options endpoint..."
 WEBAUTHN_TEST=$(curl -s "http://localhost:8080/api/v1/webauthn/options/41adab42-2b63-4903-8d6b-df2c5d4ef5d1" 2>/dev/null)
+
+if [[ "$WEBAUTHN_TEST" == *"challengeBase64"* ]]; then
+    echo -e "${GREEN}API verification successful! Mock endpoint returned standard scaffold-challenge.${NC}"
+else
+    echo -e "${RED}Warning: WebAuthn verification endpoint returned unexpected payload: ${WEBAUTHN_TEST}${NC}"
