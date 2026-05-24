@@ -28,3 +28,8 @@ CREATE TABLE user_roles (
     created_at timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (user_id, role)
 );
+
+CREATE TABLE devices (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES users(id),
+    organization_id uuid NOT NULL REFERENCES organizations(id),
