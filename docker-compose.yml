@@ -43,3 +43,8 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+
+# ==============================================================================
+# Persistent Volumes Configuration
+# ==============================================================================
+volumes:
