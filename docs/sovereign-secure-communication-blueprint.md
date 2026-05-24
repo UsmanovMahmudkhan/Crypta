@@ -88,3 +88,8 @@ Recommended initial shape: modular Spring Boot monolith with strict package boun
 
 Required services:
 
+- `AuthService`: WebAuthn registration/login ceremony, session issuance, reauth for sensitive operations.
+- `OrganizationService`: tenants, jurisdiction policy, enterprise settings.
+- `UserService`: users, lifecycle, roles.
+- `DeviceTrustService`: device registration, attestation verification, verified/revoked state.
+- `KeyService`: identity public key upload, key bundle fetch, key state.
