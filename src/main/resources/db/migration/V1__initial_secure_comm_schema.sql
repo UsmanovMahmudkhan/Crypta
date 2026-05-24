@@ -213,3 +213,8 @@ CREATE TABLE message_delivery_receipts (
     message_id uuid NOT NULL REFERENCES encrypted_messages(id) ON DELETE CASCADE,
     device_id uuid NOT NULL REFERENCES devices(id),
     receipt_type text NOT NULL,
+    received_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (message_id, device_id, receipt_type)
+);
+
+CREATE TABLE audit_events (
