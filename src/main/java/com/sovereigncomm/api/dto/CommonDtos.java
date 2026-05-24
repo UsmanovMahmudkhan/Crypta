@@ -48,3 +48,8 @@ public final class CommonDtos {
     public record RoomCreateRequest(@NotNull UUID organizationId, @NotBlank String name, @NotBlank String classification, Map<String, Object> policy) {
     }
 
+    public record RoomPolicyUpdateRequest(@NotNull UUID roomId, Map<String, Object> policy, @NotBlank String reason) {
+    }
+
+    public record MemberChangeRequest(@NotNull UUID roomId, @NotNull UUID userId, List<UUID> allowedDeviceIds, @NotBlank String reason) {
+    }
