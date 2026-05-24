@@ -638,3 +638,8 @@ Actions:
 - Export high-priority SIEM event.
 
 Ending lockdown requires explicit signed admin action and fresh client policy sync.
+
+## 17. Deployment Architecture
+
+Production baseline:
+
