@@ -143,3 +143,8 @@ CREATE TABLE rooms (
     room_type text NOT NULL DEFAULT 'MISSION_ROOM',
     mls_group_id text,
     legal_hold_enabled boolean NOT NULL DEFAULT false,
+    lockdown_state text NOT NULL DEFAULT 'NORMAL',
+    created_by uuid NOT NULL REFERENCES users(id),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
