@@ -808,3 +808,8 @@ Security tests:
 - Key substitution and transparency proof failure simulations.
 - Device revocation and remote wipe simulations.
 - Admin privilege escalation tests.
+- Penetration test before any pilot.
+
+## 23. Security Audit Checklist
+
+- No backend plaintext message or attachment fields.
