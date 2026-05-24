@@ -3,3 +3,8 @@ spring:
     name: sovereign-comm-platform
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/sovereign_comm}
+    username: ${DATABASE_USERNAME:sovereign_comm}
+    password: ${DATABASE_PASSWORD:sovereign_comm}
+  flyway:
+    enabled: true
+server:
