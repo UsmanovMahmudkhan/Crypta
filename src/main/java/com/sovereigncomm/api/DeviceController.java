@@ -13,3 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/devices")
 public class DeviceController {
     private final DeviceTrustService deviceTrustService;
+
+    public DeviceController(DeviceTrustService deviceTrustService) {
+        this.deviceTrustService = deviceTrustService;
+    }
+
