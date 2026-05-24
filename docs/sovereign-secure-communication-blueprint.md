@@ -493,3 +493,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 ### `device_revoked`
 
 - Fields: `deviceId`, `userId`, `revokedAt`, `reasonCode`.
+- Response: client ack.
+- Authentication: server-to-device event.
+- Authorization: target user/org devices.
+- Security notes: clients wipe local secrets for revoked device; peers distrust keys.
+- Failure cases: offline device receives on next sync.
