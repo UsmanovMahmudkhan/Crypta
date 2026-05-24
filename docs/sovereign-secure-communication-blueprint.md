@@ -448,3 +448,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Authentication: emergency admin step-up, optional break-glass dual approval.
 - Authorization: emergency permission.
 - Security notes: stops new sessions, room sends, attachment access, or device activity according to scope.
+- Failure cases: invalid scope, approval missing, actor not break-glass eligible.
+
+## 11. WebSocket Event Design
+
+All WebSocket connections are authenticated as a specific device. Payloads are envelopes with `type`, `eventId`, `serverTime`, `recipientDeviceId`, and type-specific body. Server must not decrypt ciphertext fields.
