@@ -108,3 +108,8 @@ Required services:
 - `MDMIntegrationService`: MDM posture sync.
 - `SIEMExportService`: normalized event export.
 - `EmergencyLockdownService`: global/org/room/device lockdown controls.
+
+Backend invariants:
+
+- Reject any field named or shaped like `message_body`, `plaintext`, `file_plaintext`, or `decrypted_metadata`.
+- Enforce room/device policy before accepting ciphertext.
