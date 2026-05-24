@@ -343,3 +343,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 ### Key Transparency Proof Fetch
 
 `GET /api/v1/key-transparency/users/{userId}/proof`
+
+- Request: path `userId`, optional tree head.
+- Response: inclusion proof, consistency proof, signed tree head.
+- Authentication: active session.
+- Authorization: same org or allowed contact graph.
