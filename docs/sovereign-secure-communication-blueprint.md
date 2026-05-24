@@ -578,3 +578,8 @@ Do not use server-side DLP/content scanning unless the organization explicitly a
 
 ## 14. MDM Integration Design
 
+Supported posture signals:
+
+- Device enrollment state.
+- OS version and patch level.
+- Screen lock and biometric policy.
