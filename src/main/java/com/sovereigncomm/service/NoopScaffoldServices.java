@@ -8,3 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Service
+class NoopScaffoldServices implements AuthService, OrganizationService, UserService, DeviceTrustService, KeyService,
+        PreKeyService, KeyTransparencyService, DirectMessageService, GroupMessageService, MLSGroupService,
+        RoomPolicyService, DeliveryService, NotificationService, AttachmentService, AuditService,
+        AdminGovernanceService, MDMIntegrationService, SIEMExportService, EmergencyLockdownService {
