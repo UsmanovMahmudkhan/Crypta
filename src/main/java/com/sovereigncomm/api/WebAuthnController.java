@@ -18,3 +18,8 @@ public class WebAuthnController {
     private final AuthService authService;
 
     public WebAuthnController(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @PostMapping("/registration/options/{userId}")
+    WebAuthnStartResponse registrationOptions(@PathVariable UUID userId) {
