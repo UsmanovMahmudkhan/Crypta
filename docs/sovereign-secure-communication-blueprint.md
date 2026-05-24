@@ -173,3 +173,8 @@ External audit required:
 - Library choice and binding code.
 - PQXDH downgrade handling.
 - MLS epoch handling.
+- Attachment key wrapping.
+- Local database encryption and key lifecycle.
+
+## 9. Database Schema
+
