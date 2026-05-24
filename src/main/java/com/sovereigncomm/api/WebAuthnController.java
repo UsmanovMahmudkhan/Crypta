@@ -33,3 +33,8 @@ public class WebAuthnController {
 
     @PostMapping("/login/options/{userId}")
     WebAuthnStartResponse loginOptions(@PathVariable UUID userId) {
+        return authService.startWebAuthnLogin(userId);
+    }
+
+    @PostMapping("/login/finish")
+    void finishLogin(@Valid @RequestBody WebAuthnFinishRequest request) {
