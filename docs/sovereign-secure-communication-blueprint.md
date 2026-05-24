@@ -78,3 +78,8 @@ Core components:
 Trust boundaries:
 
 - Client cryptographic boundary: all encryption/decryption and private key handling.
+- Backend policy boundary: authorization, room membership, device trust, rate limiting, storage, delivery.
+- Admin boundary: signed, audited, least-privileged, optionally dual-control.
+- External boundary: FCM/APNs, MDM, SIEM, object storage, identity providers.
+
+## 6. Backend Architecture
