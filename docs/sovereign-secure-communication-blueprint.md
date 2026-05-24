@@ -403,3 +403,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Response: `id`, `createdAt`, production presigned upload URL.
 - Authentication: active verified device.
 - Authorization: room attachment policy.
+- Security notes: server validates size/hash only; no content scanning unless client-side or explicit enterprise gateway.
+- Failure cases: attachment disabled, size limit, hash mismatch, storage unavailable.
+
+### Encrypted Attachment Download
+
