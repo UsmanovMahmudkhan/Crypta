@@ -248,3 +248,8 @@ CREATE TABLE emergency_lockdowns (
     room_id uuid REFERENCES rooms(id),
     scope text NOT NULL,
     reason text NOT NULL,
+    started_by uuid NOT NULL REFERENCES users(id),
+    started_at timestamptz NOT NULL DEFAULT now(),
+    ended_by uuid REFERENCES users(id),
+    ended_at timestamptz
+);
