@@ -688,3 +688,8 @@ Risk: legal hold pressure weakens E2EE.
 
 - Mitigation: v1 legal hold preserves ciphertext and audit metadata only; any plaintext escrow is a separately branded enterprise mode with explicit warnings.
 
+Dangerous mistakes:
+
+- Logging plaintext or request bodies.
+- Implementing crypto primitives manually.
+- Allowing unverified devices into sensitive rooms.
