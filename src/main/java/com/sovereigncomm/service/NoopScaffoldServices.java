@@ -133,3 +133,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     }
 
     @Override
+    public void syncDevicePosture(UUID organizationId) {
+    }
+
+    @Override
+    public void exportEvent(String normalizedAuditEventJson) {
