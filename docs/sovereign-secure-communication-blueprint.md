@@ -738,3 +738,8 @@ Phase 8: MDM, SIEM, emergency lockdown.
 
 Phase 9: Hardening, penetration testing, cryptographic audit, compliance preparation.
 
+- External audits, mobile reverse engineering review, fuzzing, load tests, incident runbooks, compliance mapping.
+
+## 20. Repository Structure
+
+Initial scaffold:
