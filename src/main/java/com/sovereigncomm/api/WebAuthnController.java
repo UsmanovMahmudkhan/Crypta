@@ -28,3 +28,8 @@ public class WebAuthnController {
 
     @PostMapping("/registration/finish")
     void finishRegistration(@Valid @RequestBody WebAuthnFinishRequest request) {
+        authService.finishWebAuthnRegistration(request);
+    }
+
+    @PostMapping("/login/options/{userId}")
+    WebAuthnStartResponse loginOptions(@PathVariable UUID userId) {
