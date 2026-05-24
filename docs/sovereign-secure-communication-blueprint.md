@@ -763,3 +763,8 @@ Initial scaffold:
     └── resources/
         ├── application.yml
         └── db/migration/V1__initial_secure_comm_schema.sql
+```
+
+## 21. Initial Code Scaffolding
+
+Implemented starter files:
