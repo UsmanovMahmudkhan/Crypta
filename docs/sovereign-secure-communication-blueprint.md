@@ -263,3 +263,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Failure cases: expired invite, invalid origin, user disabled.
 
 `POST /api/v1/webauthn/registration/finish`
+
+- Request: `userId`, `credentialJson`.
+- Response: empty success.
+- Authentication: challenge-bound ceremony.
+- Authorization: same user or approved admin-assisted flow.
