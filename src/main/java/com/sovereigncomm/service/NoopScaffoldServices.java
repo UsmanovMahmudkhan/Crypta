@@ -98,3 +98,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     public void removeMember(MemberChangeRequest request) {
     }
 
+    @Override
+    public void updatePolicy(RoomPolicyUpdateRequest request) {
+    }
+
+    @Override
