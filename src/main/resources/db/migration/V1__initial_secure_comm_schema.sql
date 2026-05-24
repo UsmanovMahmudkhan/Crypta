@@ -263,3 +263,8 @@ CREATE TABLE mdm_devices (
     compliance_state text NOT NULL,
     posture jsonb NOT NULL DEFAULT '{}'::jsonb,
     last_seen_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (organization_id, mdm_provider, external_device_id)
+);
+
