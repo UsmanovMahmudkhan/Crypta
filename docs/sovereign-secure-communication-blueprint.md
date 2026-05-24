@@ -63,3 +63,8 @@ Primary attacker goals:
 
 ## 5. Full System Architecture
 
+Core components:
+
+- Flutter mobile clients with native security modules.
+- Spring Boot backend modular monolith initially, separable into services later.
+- PostgreSQL for durable identity, policy, key metadata, ciphertext envelopes, audit, and delivery receipts.
