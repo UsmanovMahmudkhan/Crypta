@@ -743,3 +743,8 @@ Phase 9: Hardening, penetration testing, cryptographic audit, compliance prepara
 ## 20. Repository Structure
 
 Initial scaffold:
+
+```text
+.
+├── docs/
+│   └── sovereign-secure-communication-blueprint.md
