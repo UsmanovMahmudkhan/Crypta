@@ -288,3 +288,8 @@ CREATE INDEX idx_one_time_prekeys_available ON one_time_prekeys(device_id) WHERE
 CREATE INDEX idx_pq_prekeys_available ON pq_prekeys(device_id) WHERE claimed_at IS NULL;
 CREATE INDEX idx_kt_subject ON key_transparency_entries(subject_user_id, log_index);
 CREATE INDEX idx_rooms_org ON rooms(organization_id);
+CREATE INDEX idx_room_members_user ON room_members(user_id);
+CREATE INDEX idx_messages_recipient_device ON encrypted_messages(recipient_device_id, server_received_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_messages_room ON encrypted_messages(room_id, server_received_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_messages_expiry ON encrypted_messages(expires_at) WHERE expires_at IS NOT NULL;
+CREATE INDEX idx_attachments_room ON encrypted_attachments(room_id, created_at) WHERE deleted_at IS NULL;
