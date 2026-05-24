@@ -418,3 +418,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Failure cases: expired retention, revoked member, lockdown active, object missing.
 
 ### Admin Actions
+
+`POST /api/v1/admin/actions`
+
+- Request: signed admin action envelope.
+- Response: action id and approval state in production.
