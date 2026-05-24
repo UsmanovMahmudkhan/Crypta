@@ -473,3 +473,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 - Failure cases: stale epoch, removed member, lockdown active.
 
 ### `delivery_receipt`
+
+- Fields: `messageId`, `deviceId`, `receiptType`.
+- Response: ack.
+- Authentication: recipient device.
+- Authorization: receipt for own delivery only.
