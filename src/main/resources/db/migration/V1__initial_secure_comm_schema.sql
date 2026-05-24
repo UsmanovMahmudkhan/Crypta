@@ -78,3 +78,8 @@ CREATE TABLE identity_public_keys (
     public_key bytea NOT NULL,
     signature bytea NOT NULL,
     key_version integer NOT NULL,
+    active boolean NOT NULL DEFAULT true,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (device_id, key_version)
+);
+
