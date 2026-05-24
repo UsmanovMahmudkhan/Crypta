@@ -258,3 +258,8 @@ CREATE TABLE mdm_devices (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id uuid NOT NULL REFERENCES organizations(id),
     device_id uuid REFERENCES devices(id),
+    mdm_provider text NOT NULL,
+    external_device_id text NOT NULL,
+    compliance_state text NOT NULL,
+    posture jsonb NOT NULL DEFAULT '{}'::jsonb,
+    last_seen_at timestamptz,
