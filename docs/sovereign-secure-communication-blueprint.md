@@ -753,3 +753,8 @@ Initial scaffold:
 │   └── lib/src/
 │       ├── domain/crypto_provider_contracts.dart
 │       └── native/native_security_module.dart
+├── pom.xml
+└── src/main/
+    ├── java/com/sovereigncomm/
+    │   ├── api/
+    │   ├── config/
