@@ -37,3 +37,8 @@ HEALTH_URL="http://localhost:8080/actuator/health"
 MAX_ATTEMPTS=40
 ATTEMPT=1
 HEALTHY=false
+
+while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+    echo -e "Attempt ${ATTEMPT}/${MAX_ATTEMPTS} to contact health check..."
+    
+    # Send request and extract HTTP response code and body
