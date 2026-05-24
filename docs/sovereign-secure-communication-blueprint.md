@@ -783,3 +783,8 @@ The current service implementation is a no-op scaffold only. It is intentionally
 
 Backend tests:
 
+- API authorization tests for every route.
+- Schema migration tests with Testcontainers PostgreSQL.
+- Property tests for policy evaluation.
+- Race tests for one-time prekey claiming.
+- WebSocket authentication and delivery tests.
