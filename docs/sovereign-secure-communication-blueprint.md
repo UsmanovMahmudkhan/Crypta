@@ -353,3 +353,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 
 ### Room Creation
 
+`POST /api/v1/mission-rooms`
+
+- Request: `organizationId`, `name`, `classification`, `policy`.
+- Response: `id`, `createdAt`.
+- Authentication: WebAuthn step-up for creator.
