@@ -128,3 +128,8 @@ CREATE TABLE key_transparency_entries (
     entry_type text NOT NULL,
     canonical_entry_hash bytea NOT NULL,
     previous_entry_hash bytea,
+    merkle_leaf_hash bytea NOT NULL,
+    log_index bigint NOT NULL UNIQUE,
+    signed_tree_head bytea NOT NULL,
+    inclusion_proof jsonb,
+    created_at timestamptz NOT NULL DEFAULT now()
