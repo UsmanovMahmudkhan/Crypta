@@ -18,3 +18,8 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 echo -e "\n${YELLOW}[1/4] Building Docker containers...${NC}"
+docker compose build
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Error: Docker build failed!${NC}"
+    exit 1
