@@ -523,3 +523,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 - Response: ack and local enforcement status.
 - Authentication: server-to-device.
 - Authorization: affected devices.
+- Security notes: disable sends/downloads and require reauth.
+- Failure cases: offline clients enforce at sync.
+
+### `emergency_lockdown_ended`
+
