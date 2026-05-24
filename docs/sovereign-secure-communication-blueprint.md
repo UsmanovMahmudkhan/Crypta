@@ -153,3 +153,8 @@ Group messaging:
 - Treat room membership changes as MLS commits with epoch transitions.
 - Server stores MLS public group metadata and opaque MLS messages only; clients verify group state.
 
+Attachments:
+
+- Client generates random content encryption key.
+- Client encrypts file locally with AEAD using room/message associated data.
+- Content key is wrapped per recipient/session/group using E2EE mechanisms.
