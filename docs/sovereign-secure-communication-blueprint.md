@@ -833,3 +833,8 @@ Security tests:
 - Custom cryptographic primitives or homegrown Signal/PQXDH/MLS.
 - Web client for high-classification rooms unless its weaker hardware-key and XSS posture is explicitly accepted.
 - Plaintext legal hold.
+- Admin message viewing.
+- Notification previews.
+- Server-side full-text search over messages.
+- Automatic device trust without attestation and user verification.
+- Cross-organization federation.
