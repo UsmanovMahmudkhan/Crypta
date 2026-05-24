@@ -43,3 +43,6 @@ abstract interface class KeyTransparencyVerifier {
   Future<bool> verifyConsistencyProof({
     required Uint8List oldSignedTreeHead,
     required Uint8List newSignedTreeHead,
+    required Uint8List consistencyProof,
+  });
+}
