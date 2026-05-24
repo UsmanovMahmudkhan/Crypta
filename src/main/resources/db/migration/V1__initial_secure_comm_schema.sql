@@ -173,3 +173,8 @@ CREATE TABLE room_policies (
     version integer NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (room_id, version)
+);
+
+CREATE TABLE encrypted_messages (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id uuid NOT NULL REFERENCES organizations(id),
