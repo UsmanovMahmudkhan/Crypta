@@ -2,6 +2,7 @@ package com.sovereigncomm.api;
 
 import com.sovereigncomm.api.dto.CommonDtos.WebAuthnFinishRequest;
 import com.sovereigncomm.api.dto.CommonDtos.WebAuthnStartResponse;
+import com.sovereigncomm.api.dto.CommonDtos.SessionResponse;
 import com.sovereigncomm.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,8 +28,8 @@ public class WebAuthnController {
     }
 
     @PostMapping("/registration/finish")
-    void finishRegistration(@Valid @RequestBody WebAuthnFinishRequest request) {
-        authService.finishWebAuthnRegistration(request);
+    SessionResponse finishRegistration(@Valid @RequestBody WebAuthnFinishRequest request) {
+        return authService.finishWebAuthnRegistration(request);
     }
 
     @PostMapping("/login/options/{userId}")
@@ -37,7 +38,7 @@ public class WebAuthnController {
     }
 
     @PostMapping("/login/finish")
-    void finishLogin(@Valid @RequestBody WebAuthnFinishRequest request) {
-        authService.finishWebAuthnLogin(request);
+    SessionResponse finishLogin(@Valid @RequestBody WebAuthnFinishRequest request) {
+        return authService.finishWebAuthnLogin(request);
     }
 }
