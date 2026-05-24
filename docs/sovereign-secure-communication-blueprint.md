@@ -603,3 +603,8 @@ Enforcement:
 Export normalized events:
 
 - Admin action created/approved/executed.
+- Device registered/verified/revoked.
+- Key uploaded/changed/proof failure.
+- Room created/policy changed/member changed.
+- Emergency lockdown started/ended.
+- Authentication success/failure/risk.
