@@ -408,3 +408,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 
 ### Encrypted Attachment Download
 
+`GET /api/v1/attachments/{attachmentId}/download`
+
+- Request: path `attachmentId`.
+- Response: presigned download URL and crypto metadata.
+- Authentication: active verified device.
