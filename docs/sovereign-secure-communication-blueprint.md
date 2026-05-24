@@ -38,3 +38,8 @@ Primary attacker goals:
 - Abuse admin console or support paths.
 - Infer sensitive activity from metadata.
 - Prevent key rotation or force downgrade away from PQXDH/MLS.
+
+## 3. Security Goals
+
+- E2EE by default for direct and mission room messages.
+- No plaintext messages or attachments on backend.
