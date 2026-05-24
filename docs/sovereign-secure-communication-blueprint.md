@@ -498,3 +498,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 - Authorization: target user/org devices.
 - Security notes: clients wipe local secrets for revoked device; peers distrust keys.
 - Failure cases: offline device receives on next sync.
+
+### `key_changed`
+
+- Fields: `userId`, `deviceId`, `keyVersion`, `transparencyProofRef`.
+- Response: client proof verification result in production telemetry.
