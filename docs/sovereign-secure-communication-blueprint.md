@@ -793,3 +793,8 @@ Backend tests:
 
 Mobile tests:
 
+- Native key generation and hardware-backed attestation tests on real devices.
+- Biometric unlock and key unwrap tests.
+- Local encrypted database recovery tests.
+- Offline message queue tests.
+- MLS epoch transition tests.
