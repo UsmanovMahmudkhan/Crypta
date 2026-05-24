@@ -22,3 +22,7 @@ RUN addgroup -S sovereign && adduser -S sovereign -G sovereign
 COPY --from=builder /app/target/sovereign-comm-platform-0.1.0-SNAPSHOT.jar app.jar
 
 # Set ownership of the runtime assets to the non-root user
+RUN chown -R sovereign:sovereign /app
+
+# Switch to the non-root user for security hardening
+USER sovereign
