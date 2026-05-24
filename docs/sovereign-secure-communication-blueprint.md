@@ -628,3 +628,8 @@ Scopes:
 - Organization-wide: block new sends, key uploads, attachment downloads, admin changes except break-glass.
 - Room-level: freeze membership, block sends/downloads, require MLS state resync after unlock.
 - User/device-level: revoke sessions, require re-verification, optionally remote wipe.
+
+Actions:
+
+- Emit WebSocket `emergency_lockdown_started`.
+- Revoke or suspend active sessions based on scope.
