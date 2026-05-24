@@ -43,3 +43,8 @@ public class KeyController {
 
     @PostMapping("/pq-prekeys")
     void uploadPqPreKey(@Valid @RequestBody PreKeyUploadRequest request) {
+        preKeyService.uploadPqPreKey(request);
+    }
+
+    @GetMapping("/bundle/{userId}")
+    KeyBundleResponse keyBundle(@PathVariable UUID userId) {
