@@ -268,3 +268,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Response: empty success.
 - Authentication: challenge-bound ceremony.
 - Authorization: same user or approved admin-assisted flow.
+- Security notes: store credential public key and attestation metadata.
+- Failure cases: challenge mismatch, replay, unsupported authenticator policy.
+
+### WebAuthn Login
+
