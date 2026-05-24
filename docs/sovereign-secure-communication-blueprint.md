@@ -643,3 +643,8 @@ Ending lockdown requires explicit signed admin action and fresh client policy sy
 
 Production baseline:
 
+- Kubernetes or hardened VM deployment with separate namespaces/security groups.
+- TLS 1.3 everywhere; mTLS for internal service calls and SIEM/MDM connectors.
+- PostgreSQL with encryption at rest, PITR, strict network access, row-level tenancy checks in app.
+- Redis with TLS, auth, no persistence for sensitive queues unless encrypted envelopes only.
+- Object storage with private buckets, presigned URLs, object lock where required.
