@@ -53,3 +53,8 @@ CREATE TABLE device_attestations (
     attestation_statement bytea NOT NULL,
     verified_claims jsonb NOT NULL DEFAULT '{}'::jsonb,
     verification_status text NOT NULL,
+    verified_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE webauthn_credentials (
