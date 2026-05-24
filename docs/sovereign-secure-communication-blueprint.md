@@ -378,3 +378,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 `POST /api/v1/mission-rooms/members/invite`
 
 - Request: `roomId`, `userId`, `allowedDeviceIds`, `reason`.
+- Response: empty success.
+- Authentication: room admin step-up.
+- Authorization: invite permission and device policy.
+- Security notes: invited client receives MLS welcome encrypted to verified device.
+- Failure cases: unverified device, classification mismatch, MDM noncompliant.
