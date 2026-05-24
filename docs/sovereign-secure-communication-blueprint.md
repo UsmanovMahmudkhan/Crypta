@@ -668,3 +668,8 @@ Risk: endpoint compromise can expose plaintext after decryption.
 - Mitigation: hardware-backed keys, biometric unlock, local DB encryption, MDM posture, jailbreak/root signals, short session TTLs, remote wipe.
 - Cannot guarantee: malware-free endpoints or prevention of screen photography.
 
+Risk: malicious key substitution.
+
+- Mitigation: device signatures, key transparency, safety numbers, independent monitors, send-block on proof failure.
+
+Risk: push metadata leakage.
