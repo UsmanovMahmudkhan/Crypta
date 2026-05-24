@@ -228,3 +228,8 @@ CREATE TABLE audit_events (
     metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
     previous_event_hash bytea,
     event_hash bytea NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE admin_actions (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
