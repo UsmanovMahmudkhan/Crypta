@@ -48,3 +48,6 @@ public class KeyController {
 
     @GetMapping("/bundle/{userId}")
     KeyBundleResponse keyBundle(@PathVariable UUID userId) {
+        return keyService.fetchKeyBundle(userId);
+    }
+}
