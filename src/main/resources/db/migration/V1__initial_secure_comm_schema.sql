@@ -63,3 +63,8 @@ CREATE TABLE webauthn_credentials (
     credential_id bytea NOT NULL UNIQUE,
     public_key_cose bytea NOT NULL,
     signature_count bigint NOT NULL DEFAULT 0,
+    transports text[] NOT NULL DEFAULT '{}',
+    attestation_type text,
+    backup_eligible boolean,
+    backup_state boolean,
+    created_at timestamptz NOT NULL DEFAULT now(),
