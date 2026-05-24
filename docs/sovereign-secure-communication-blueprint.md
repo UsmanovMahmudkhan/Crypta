@@ -98,3 +98,8 @@ Required services:
 - `DirectMessageService`: accept and persist direct ciphertext envelopes only.
 - `GroupMessageService`: accept and persist MLS ciphertext envelopes only.
 - `MLSGroupService`: room-to-MLS group lifecycle, membership state, commit envelope delivery.
+- `RoomPolicyService`: mission room policy validation and versioning.
+- `WebSocketGateway`: authenticated device channel, no plaintext parsing.
+- `DeliveryService`: offline queue and delivery receipt orchestration.
+- `NotificationService`: generic push only.
+- `AttachmentService`: encrypted attachment object lifecycle.
