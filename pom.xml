@@ -7,3 +7,8 @@
     <groupId>com.sovereigncomm</groupId>
     <artifactId>sovereign-comm-platform</artifactId>
     <version>0.1.0-SNAPSHOT</version>
+    <name>Sovereign Communication Platform</name>
+    <description>Zero-trust backend scaffold for an end-to-end encrypted executive communication platform.</description>
+
+    <properties>
+        <java.version>21</java.version>
