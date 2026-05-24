@@ -23,3 +23,8 @@ abstract interface class GroupCryptoProvider {
   Future<Uint8List> encryptGroupMessage({
     required String roomId,
     required Uint8List plaintext,
+    required Map<String, Uint8List> associatedData,
+  });
+
+  Future<Uint8List> decryptGroupMessage({
+    required String roomId,
