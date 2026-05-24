@@ -608,3 +608,8 @@ Export normalized events:
 - Room created/policy changed/member changed.
 - Emergency lockdown started/ended.
 - Authentication success/failure/risk.
+- MDM posture changes.
+
+Never export:
+
+- Plaintext message content.
