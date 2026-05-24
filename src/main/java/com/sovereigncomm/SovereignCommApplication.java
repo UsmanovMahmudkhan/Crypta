@@ -7,3 +7,5 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class SovereignCommApplication {
     public static void main(String[] args) {
         SpringApplication.run(SovereignCommApplication.class, args);
+    }
+}
