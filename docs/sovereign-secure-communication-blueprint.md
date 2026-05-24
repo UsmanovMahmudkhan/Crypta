@@ -828,3 +828,8 @@ Security tests:
 - Mobile native modules reviewed by iOS/Android security specialists.
 - External cryptographic review completed before production.
 
+## 24. What Must Not Be Built in Version 1
+
+- Custom cryptographic primitives or homegrown Signal/PQXDH/MLS.
+- Web client for high-classification rooms unless its weaker hardware-key and XSS posture is explicitly accepted.
+- Plaintext legal hold.
