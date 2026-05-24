@@ -8,3 +8,8 @@ abstract interface class DirectCryptoProvider {
   });
 
   Future<Uint8List> decryptDirectMessage({
+    required String senderDeviceId,
+    required Uint8List ciphertextEnvelope,
+    required Map<String, Uint8List> associatedData,
+  });
+}
