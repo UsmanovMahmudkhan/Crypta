@@ -7,3 +7,5 @@ import com.sovereigncomm.api.dto.CommonDtos.RoomCreateRequest;
 public interface MLSGroupService {
     IdResponse createMissionRoom(RoomCreateRequest request);
     void inviteMember(MemberChangeRequest request);
+    void removeMember(MemberChangeRequest request);
+}
