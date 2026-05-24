@@ -23,3 +23,8 @@ public class AttachmentController {
         this.attachmentService = attachmentService;
     }
 
+    @PostMapping
+    IdResponse createUpload(@Valid @RequestBody AttachmentCreateRequest request) {
+        return attachmentService.createEncryptedAttachment(request);
+    }
+
