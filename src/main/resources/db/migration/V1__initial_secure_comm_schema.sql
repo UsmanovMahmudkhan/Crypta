@@ -273,3 +273,8 @@ CREATE TABLE siem_exports (
     organization_id uuid NOT NULL REFERENCES organizations(id),
     sink_type text NOT NULL,
     sink_config_ref text NOT NULL,
+    last_exported_event_id uuid,
+    last_exported_at timestamptz,
+    status text NOT NULL DEFAULT 'ACTIVE',
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
