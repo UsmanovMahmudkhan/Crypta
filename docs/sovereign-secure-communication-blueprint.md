@@ -338,3 +338,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Authentication: active device session.
 - Authorization: sender has permission to contact recipient.
 - Security notes: include transparency proof reference; atomically claim one-time prekeys.
+- Failure cases: no verified recipient device, policy blocks contact, prekey exhaustion.
+
+### Key Transparency Proof Fetch
+
+`GET /api/v1/key-transparency/users/{userId}/proof`
