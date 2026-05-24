@@ -773,3 +773,8 @@ Implemented starter files:
 - Security defaults: [SecurityConfig.java](/Users/mahmudkhonusmonov/Documents/java/src/main/java/com/sovereigncomm/config/SecurityConfig.java)
 - REST controllers for orgs, users, devices, WebAuthn, keys, rooms, attachments, admin.
 - Backend service contracts for all required service modules.
+- Crypto provider interfaces: [crypto package](/Users/mahmudkhonusmonov/Documents/java/src/main/java/com/sovereigncomm/crypto)
+- PostgreSQL/Flyway schema: [V1__initial_secure_comm_schema.sql](/Users/mahmudkhonusmonov/Documents/java/src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+- Flutter/native provider contracts: [mobile README](/Users/mahmudkhonusmonov/Documents/java/mobile/README.md)
+
+The current service implementation is a no-op scaffold only. It is intentionally not a security implementation.
