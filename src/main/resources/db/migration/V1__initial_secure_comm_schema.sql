@@ -83,3 +83,8 @@ CREATE TABLE identity_public_keys (
     UNIQUE (device_id, key_version)
 );
 
+CREATE TABLE signed_prekeys (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_id uuid NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    key_id text NOT NULL,
+    algorithm text NOT NULL,
