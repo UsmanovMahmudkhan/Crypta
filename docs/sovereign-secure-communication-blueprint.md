@@ -363,3 +363,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Failure cases: invalid classification, policy weaker than org baseline, lockdown active.
 
 ### Room Policy Update
+
+`POST /api/v1/mission-rooms/policy`
+
+- Request: `roomId`, `policy`, `reason`.
+- Response: empty success.
