@@ -53,3 +53,8 @@ public final class CommonDtos {
 
     public record MemberChangeRequest(@NotNull UUID roomId, @NotNull UUID userId, List<UUID> allowedDeviceIds, @NotBlank String reason) {
     }
+
+    public record AttachmentCreateRequest(@NotNull UUID roomId, @NotBlank String objectKey, @NotBlank String ciphertextSha256, long ciphertextBytes, Map<String, Object> cryptoMetadata) {
+    }
+
+    public record AuditExportRequest(@NotNull UUID organizationId, @NotBlank String sinkType, Instant from, Instant to) {
