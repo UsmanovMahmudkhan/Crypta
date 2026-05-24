@@ -13,3 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
+@RequestMapping("/api/v1/webauthn")
+public class WebAuthnController {
+    private final AuthService authService;
+
+    public WebAuthnController(AuthService authService) {
