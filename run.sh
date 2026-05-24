@@ -47,3 +47,8 @@ while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
     BODY=$(echo "$RESPONSE" | sed '$d')
     
     if [ "$HTTP_STATUS" -eq 200 ] && [[ "$BODY" == *"UP"* ]]; then
+        echo -e "\n${GREEN}Success! Backend is healthy and responding with status: UP${NC}"
+        HEALTHY=true
+        break
+    fi
+    
