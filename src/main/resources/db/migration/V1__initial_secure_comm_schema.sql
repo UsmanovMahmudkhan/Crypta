@@ -208,3 +208,8 @@ CREATE TABLE encrypted_attachments (
     deleted_at timestamptz
 );
 
+CREATE TABLE message_delivery_receipts (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    message_id uuid NOT NULL REFERENCES encrypted_messages(id) ON DELETE CASCADE,
+    device_id uuid NOT NULL REFERENCES devices(id),
+    receipt_type text NOT NULL,
