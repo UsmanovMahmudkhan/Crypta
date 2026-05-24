@@ -383,3 +383,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Authorization: invite permission and device policy.
 - Security notes: invited client receives MLS welcome encrypted to verified device.
 - Failure cases: unverified device, classification mismatch, MDM noncompliant.
+
+### Member Removal
+
+`POST /api/v1/mission-rooms/members/remove`
+
