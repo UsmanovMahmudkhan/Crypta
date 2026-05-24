@@ -663,3 +663,8 @@ Operational controls:
 
 ## 18. Security Risks and Mitigations
 
+Risk: endpoint compromise can expose plaintext after decryption.
+
+- Mitigation: hardware-backed keys, biometric unlock, local DB encryption, MDM posture, jailbreak/root signals, short session TTLs, remote wipe.
+- Cannot guarantee: malware-free endpoints or prevention of screen photography.
+
