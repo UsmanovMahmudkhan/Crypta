@@ -648,3 +648,8 @@ Production baseline:
 - PostgreSQL with encryption at rest, PITR, strict network access, row-level tenancy checks in app.
 - Redis with TLS, auth, no persistence for sensitive queues unless encrypted envelopes only.
 - Object storage with private buckets, presigned URLs, object lock where required.
+- HSM/KMS for server signing keys used by transparency log and audit hash signing; never for message keys.
+- WAF and DDoS protection at the edge.
+- Centralized secrets manager with rotation.
+- Immutable infrastructure and signed containers.
+
