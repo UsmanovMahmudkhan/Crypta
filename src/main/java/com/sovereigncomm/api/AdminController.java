@@ -22,3 +22,8 @@ public class AdminController {
         this.adminGovernanceService = adminGovernanceService;
         this.auditService = auditService;
         this.emergencyLockdownService = emergencyLockdownService;
+    }
+
+    @PostMapping("/actions")
+    void recordAction(@RequestBody String signedAdminActionEnvelope) {
+        adminGovernanceService.recordSignedAction(signedAdminActionEnvelope);
