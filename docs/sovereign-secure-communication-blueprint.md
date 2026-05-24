@@ -328,3 +328,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Authorization: own device only.
 - Security notes: distinguish one-time PQ prekeys and last-resort signed PQ prekey.
 - Failure cases: unsupported PQ algorithm, invalid signature, quota exceeded.
+
+### Key Bundle Fetch
+
+`GET /api/v1/keys/bundle/{userId}`
+
