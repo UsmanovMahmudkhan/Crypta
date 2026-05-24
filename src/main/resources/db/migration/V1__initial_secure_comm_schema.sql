@@ -198,3 +198,8 @@ CREATE TABLE encrypted_attachments (
     organization_id uuid NOT NULL REFERENCES organizations(id),
     room_id uuid REFERENCES rooms(id),
     uploader_user_id uuid NOT NULL REFERENCES users(id),
+    uploader_device_id uuid NOT NULL REFERENCES devices(id),
+    object_key text NOT NULL UNIQUE,
+    ciphertext_sha256 bytea NOT NULL,
+    ciphertext_bytes bigint NOT NULL,
+    crypto_metadata jsonb NOT NULL,
