@@ -143,3 +143,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     @Override
     public void startLockdown(EmergencyLockdownRequest request) {
     }
+
+    @Override
+    public void endLockdown(UUID lockdownId, String reason) {
+    }
+
