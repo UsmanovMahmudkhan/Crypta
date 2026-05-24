@@ -78,3 +78,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
 
     @Override
     public Map<String, Object> proof(UUID userId) {
+        return Map.of("userId", userId, "proof", "scaffold");
+    }
+
+    @Override
+    public void acceptCiphertextEnvelope(String encryptedDirectMessageEnvelope) {
