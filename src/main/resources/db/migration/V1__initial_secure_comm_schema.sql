@@ -193,3 +193,8 @@ CREATE TABLE encrypted_messages (
     CHECK (message_kind IN ('DIRECT', 'MLS_GROUP'))
 );
 
+CREATE TABLE encrypted_attachments (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id uuid NOT NULL REFERENCES organizations(id),
+    room_id uuid REFERENCES rooms(id),
+    uploader_user_id uuid NOT NULL REFERENCES users(id),
