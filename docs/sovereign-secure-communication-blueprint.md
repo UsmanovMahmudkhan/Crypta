@@ -123,3 +123,8 @@ Flutter layers:
 
 - Presentation: mission room UI, verification UI, safety numbers, emergency lock UI, admin UX where allowed.
 - Application: workflows, state machines, retry policy, sync orchestration.
+- Domain: users, devices, key bundles, rooms, room policies, message envelopes.
+- Infrastructure: REST API, WebSocket client, object upload/download, MDM state adapter.
+- Crypto bridge: `DirectCryptoProvider`, `GroupCryptoProvider`, `KeyTransparencyVerifier`.
+- Secure storage: `SecureStorageProvider` backed by native modules.
+- WebSocket layer: device-authenticated realtime encrypted envelope stream.
