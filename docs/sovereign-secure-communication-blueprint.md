@@ -188,3 +188,8 @@ Tables included:
 - `devices`
 - `device_attestations`
 - `webauthn_credentials`
+- `identity_public_keys`
+- `signed_prekeys`
+- `one_time_prekeys`
+- `pq_prekeys`
+- `key_transparency_entries`
