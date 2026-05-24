@@ -38,3 +38,8 @@ public final class CommonDtos {
 
     public record PublicKeyUploadRequest(@NotNull UUID deviceId, @NotBlank String algorithm, @NotBlank String publicKeyBase64, @NotBlank String signatureBase64) {
     }
+
+    public record PreKeyUploadRequest(@NotNull UUID deviceId, @NotBlank String keyId, @NotBlank String algorithm, @NotBlank String publicKeyBase64, String signatureBase64) {
+    }
+
+    public record KeyBundleResponse(UUID userId, UUID deviceId, List<Map<String, Object>> identityKeys, List<Map<String, Object>> prekeys) {
