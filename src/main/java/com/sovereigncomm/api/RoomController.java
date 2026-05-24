@@ -18,3 +18,8 @@ public class RoomController {
     private final MLSGroupService mlsGroupService;
     private final RoomPolicyService roomPolicyService;
 
+    public RoomController(MLSGroupService mlsGroupService, RoomPolicyService roomPolicyService) {
+        this.mlsGroupService = mlsGroupService;
+        this.roomPolicyService = roomPolicyService;
+    }
+
