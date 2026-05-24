@@ -413,3 +413,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Request: path `attachmentId`.
 - Response: presigned download URL and crypto metadata.
 - Authentication: active verified device.
+- Authorization: room membership and policy.
+- Security notes: object remains ciphertext; client verifies hash and decrypts.
+- Failure cases: expired retention, revoked member, lockdown active, object missing.
+
+### Admin Actions
