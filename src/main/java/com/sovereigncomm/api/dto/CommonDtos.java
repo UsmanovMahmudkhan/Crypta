@@ -23,3 +23,8 @@ public final class CommonDtos {
 
     public record DeviceRegisterRequest(
             @NotNull UUID userId,
+            @NotBlank String platform,
+            @NotBlank String deviceName,
+            @NotBlank String attestationFormat,
+            @NotBlank String attestationObjectBase64,
+            @NotBlank String deviceSigningPublicKeyBase64) {
