@@ -598,3 +598,8 @@ Enforcement:
 - Sensitive rooms require verified device plus compliant MDM state.
 - Noncompliant devices lose room access and attachment download until remediated.
 
+## 15. SIEM Integration Design
+
+Export normalized events:
+
+- Admin action created/approved/executed.
