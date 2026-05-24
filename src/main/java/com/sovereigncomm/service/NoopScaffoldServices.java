@@ -28,3 +28,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
         return new WebAuthnStartResponse("scaffold-challenge", Map.of("userId", userId));
     }
 
+    @Override
+    public void finishWebAuthnLogin(WebAuthnFinishRequest request) {
+    }
+
+    @Override
