@@ -38,3 +38,8 @@ services:
       DATABASE_PASSWORD: sovereign_comm
       WEBAUTHN_RP_ID: localhost
       WEBAUTHN_RP_NAME: Sovereign Comm
+      WEBAUTHN_ALLOWED_ORIGINS: http://localhost:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
