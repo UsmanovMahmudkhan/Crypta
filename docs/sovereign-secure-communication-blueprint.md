@@ -288,3 +288,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Response: device-bound session token and refresh metadata in production.
 - Authentication: WebAuthn assertion.
 - Authorization: active user, compliant device.
+- Security notes: require step-up for admin and sensitive room access.
+- Failure cases: signature invalid, cloned credential counter anomaly, device revoked.
+
+### Key Uploads
+
