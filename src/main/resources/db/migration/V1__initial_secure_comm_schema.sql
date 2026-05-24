@@ -148,3 +148,8 @@ CREATE TABLE rooms (
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+CREATE TABLE room_members (
+    room_id uuid NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+    user_id uuid NOT NULL REFERENCES users(id),
+    role text NOT NULL DEFAULT 'MEMBER',
