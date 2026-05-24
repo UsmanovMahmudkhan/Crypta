@@ -133,3 +133,8 @@ Flutter layers:
 
 Native module boundaries:
 
+- iOS: Secure Enclave/Keychain wrapper, biometric unlock, DeviceCheck/App Attest where applicable, jailbreak signals, secure screen controls where available.
+- Android: Keystore/StrongBox wrapper, BiometricPrompt, hardware key attestation, Play Integrity/enterprise attestation where applicable, root signals, `FLAG_SECURE`.
+
+Flutter is not suitable for low-level key generation, hardware attestation verification, biometric-gated key unwrap, jailbreak/root detection, or reliable secure screen controls. These require native implementations and security review.
+
