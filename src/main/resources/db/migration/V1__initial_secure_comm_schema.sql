@@ -48,3 +48,8 @@ CREATE TABLE devices (
 
 CREATE TABLE device_attestations (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_id uuid NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    attestation_format text NOT NULL,
+    attestation_statement bytea NOT NULL,
+    verified_claims jsonb NOT NULL DEFAULT '{}'::jsonb,
+    verification_status text NOT NULL,
