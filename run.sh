@@ -13,3 +13,8 @@ echo -e "${BLUE}======================================================${NC}"
 
 # Ensure docker daemon is running
 if ! docker info > /dev/null 2>&1; then
+    echo -e "${RED}Error: Docker daemon is not running. Please start Docker and try again.${NC}"
+    exit 1
+fi
+
+echo -e "\n${YELLOW}[1/4] Building Docker containers...${NC}"
