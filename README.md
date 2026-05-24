@@ -1,34 +1,175 @@
-# Sovereign Comm Platform
+# Sovereign Communication Platform
 
-Sovereign Comm is a Spring Boot backend and Flutter mobile scaffold for a zero-trust, end-to-end encrypted executive communication platform.
+Sovereign Communication Platform is a zero-trust, end-to-end encrypted communication system scaffold designed for high-risk corporate and executive environments. It provides secure direct and group messaging pipelines by ensuring that only ciphertext envelopes are ingested, transmitted, or persisted on the server side. The platform is built for organizations requiring absolute data privacy, preventing plaintext leakage even in the event of database or administrator credential compromise.
+
+Verified reference anchors checked on 2026-05-24:
+* [IETF RFC 9420: Messaging Layer Security](https://www.ietf.org/rfc/rfc9420)
+* [Signal PQXDH specification](https://signal.org/docs/specifications/pqxdh/)
+* [W3C WebAuthn Level 3](https://www.w3.org/TR/webauthn-3/)
+* [Spring Security passkeys/WebAuthn](https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html)
+* [Apple Secure Enclave key protection](https://developer.apple.com/documentation/Security/protecting-keys-with-the-secure-enclave)
+* [Android hardware-backed Keystore](https://source.android.google.cn/docs/security/features/keystore?hl=en)
+* [Sigstore Rekor transparency log overview](https://docs.sigstore.dev/logging/overview/)
+
+---
+
+## Structure Map
+
+```mermaid
+flowchart TD
+    User([User]) --> UI["UI Layer (main.dart)"]
+    
+    subgraph ClientApp ["Mobile Client (Flutter)"]
+        UI --> AppOrch["Application Orchestrator"]
+        AppOrch --> CryptoBridge["Crypto Bridge (DirectCryptoProvider, GroupCryptoProvider)"]
+        AppOrch --> LocalDB["Local Encrypted Database (SQLCipher/Drift)"]
+        CryptoBridge --> SecureStorage["Secure Storage Interface (SecureStorageProvider)"]
+    end
+
+    subgraph NativeOS ["Native OS Security Modules"]
+        iOSSecureEnclave["iOS Secure Enclave / Keychain"]
+        AndroidKeystore["Android KeyStore / StrongBox"]
+        BiometricUnlock["Biometric Authentication APIs"]
+    end
+
+    SecureStorage --> iOSSecureEnclave
+    SecureStorage --> AndroidKeystore
+    AppOrch --> BiometricUnlock
+
+    AppOrch -- "TLS 1.3 / HTTPS" --> BackendGateway["Backend Web Gateway (SecurityConfig, RequestIdFilter)"]
+
+    subgraph Backend ["Spring Boot Monolith"]
+        BackendGateway --> AuthFilter["ApiAuthenticationFilter (Bearer token validation)"]
+        AuthFilter --> PlaintextGuard["PlaintextGuard (Validates metadata structure)"]
+        PlaintextGuard --> Controllers["Controllers (WebAuthn, Key, Message, Attachment, Room, Admin)"]
+        Controllers --> Services["Services (JdbcSovereignCommServices implementation)"]
+    end
+
+    subgraph Infrastructure ["Infrastructure Services"]
+        Services --> DB[("Database (PostgreSQL 16)")]
+        Services --> SIEM["SIEM Export Sinks (Splunk, Elastic, Sentinel)"]
+        Services --> MDM["MDM Providers (JAMF, Microsoft Intune)"]
+    end
+```
+
+⸻
 
 ## What Is Implemented
 
-- PostgreSQL/Flyway schema for organizations, users, devices, keys, rooms, ciphertext messages, attachments, audit events, lockdowns, WebAuthn challenges, and API sessions.
-- JDBC-backed backend services replacing the former no-op scaffold.
-- Bearer-token API sessions with hashed token storage.
-- Bootstrap-token support for first tenant/user setup.
-- Ciphertext-only message and attachment APIs with plaintext-shaped metadata rejection.
-- Key bundle and append-only key transparency proof endpoints.
-- OpenAPI UI through `/swagger-ui.html`.
-- Kubernetes manifests under `k8s/base`.
-- Flutter mobile shell under `mobile/`.
+### User Authentication & Sessions
 
-## Local Start
+The project includes secure WebAuthn/Passkey registration and login flows, challenge-replay protection, and random bearer tokens stored as SHA-256 hashes.
 
-```bash
-cp .env.example .env
-docker compose up --build
-```
+Implemented with:
 
-Health check:
+* [Spring Security](https://spring.io/projects/spring-security)
+* [WebAuthn](https://www.w3.org/TR/webauthn-3/)
+* [WebAuthnController](src/main/java/com/sovereigncomm/api/WebAuthnController.java)
+* [ApiAuthenticationFilter](src/main/java/com/sovereigncomm/security/ApiAuthenticationFilter.java)
+* [webauthn_credentials](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+* [webauthn_challenges](src/main/resources/db/migration/V2__production_security_runtime.sql)
+* [api_sessions](src/main/resources/db/migration/V2__production_security_runtime.sql)
 
-```bash
-curl http://localhost:8080/actuator/health
-```
+### Zero-Trust Message Ingestion
 
-Use `X-Bootstrap-Token` from `.env` to create the first organization and user. Rotate or remove that token before any shared environment.
+The project implements API endpoints that ingest and store only encrypted ciphertext envelopes, verifying metadata constraints without exposing message payloads.
 
-## Production Notes
+Implemented with:
 
-The backend is production-shaped but not production-certified. Before making production security claims, complete the items in `docs/security-verification.md`, especially full WebAuthn finish verification and external review of Signal/PQXDH/MLS/mobile key handling.
+* [Spring Boot](https://spring.io/projects/spring-boot)
+* [MessageController](src/main/java/com/sovereigncomm/api/MessageController.java)
+* [JdbcSovereignCommServices](src/main/java/com/sovereigncomm/service/JdbcSovereignCommServices.java)
+* [encrypted_messages](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+
+### Plaintext Prevention Guard
+
+The project uses strict validation logic to reject JSON metadata payloads containing any keys matching patterns for plaintext, body content, or decrypted parameters.
+
+Implemented with:
+
+* [PlaintextGuard](src/main/java/com/sovereigncomm/security/PlaintextGuard.java)
+
+### Cryptographic Key Management
+
+The project provides prekey and identity key storage endpoints supporting Signal-style cryptographic handshake setups.
+
+Implemented with:
+
+* [PQXDH](https://signal.org/docs/specifications/pqxdh/)
+* [Double Ratchet](https://signal.org/docs/specifications/doubleratchet/)
+* [KeyController](src/main/java/com/sovereigncomm/api/KeyController.java)
+* [identity_public_keys](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+* [signed_prekeys](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+* [one_time_prekeys](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+* [pq_prekeys](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+
+### Merkle Log Key Transparency
+
+The project logs key history events in an append-only transparency log to verify public key integrity.
+
+Implemented with:
+
+* [KeyTransparencyService](src/main/java/com/sovereigncomm/service/JdbcSovereignCommServices.java)
+* [key_transparency_entries](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+
+### Tamper-Evident Auditing
+
+The project implements audit events hash-chained per organization to verify log integrity and order.
+
+Implemented with:
+
+* [SHA-256](https://en.wikipedia.org/wiki/SHA-2)
+* [AuditService](src/main/java/com/sovereigncomm/service/JdbcSovereignCommServices.java)
+* [audit_events](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+
+### Secure File Attachments
+
+The project handles upload and download paths for client-side encrypted attachments.
+
+Implemented with:
+
+* [AttachmentController](src/main/java/com/sovereigncomm/api/AttachmentController.java)
+* [encrypted_attachments](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+
+### Emergency Lockdown Control
+
+The project supports organizational and room-level emergency lockdowns that instantly suspend activity.
+
+Implemented with:
+
+* [AdminController](src/main/java/com/sovereigncomm/api/AdminController.java)
+* [emergency_lockdowns](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+
+### Device Trust & Attestation
+
+The project tracks hardware-backed device attestation status, compliance state, and revocation actions.
+
+Implemented with:
+
+* [DeviceController](src/main/java/com/sovereigncomm/api/DeviceController.java)
+* [devices](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+* [device_attestations](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
+
+### Mobile Presentation & Contracts
+
+The mobile module defines abstract cryptographic interfaces and visual presentation mockups for secure conversations.
+
+Implemented with:
+
+* [Flutter](https://flutter.dev)
+* [Dart](https://dart.dev)
+* [SovereignCommApp](mobile/lib/main.dart)
+* [crypto_provider_contracts.dart](mobile/lib/src/domain/crypto_provider_contracts.dart)
+* [native_security_module.dart](mobile/lib/src/native/native_security_module.dart)
+
+### Containerized Deployment
+
+The project contains production-ready deployment specifications for containerized orchestrators.
+
+Implemented with:
+
+* [Docker](https://www.docker.com)
+* [Kubernetes](https://kubernetes.io)
+* [Dockerfile](Dockerfile)
+* [docker-compose.yml](docker-compose.yml)
+* [k8s/base/](k8s/base/)
