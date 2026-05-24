@@ -573,3 +573,8 @@ Download flow:
 2. Backend checks room membership, device trust, retention, lockdown.
 3. Backend returns presigned URL and crypto metadata.
 4. Client downloads ciphertext, verifies hash, unwraps content key, decrypts locally.
+
+Do not use server-side DLP/content scanning unless the organization explicitly accepts client-side scanning or a controlled decryption gateway that breaks pure E2EE.
+
+## 14. MDM Integration Design
+
