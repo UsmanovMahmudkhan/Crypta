@@ -568,3 +568,8 @@ Upload flow:
 6. Backend stores object key, ciphertext hash, size, retention, crypto metadata.
 
 Download flow:
+
+1. Client requests attachment access.
+2. Backend checks room membership, device trust, retention, lockdown.
+3. Backend returns presigned URL and crypto metadata.
+4. Client downloads ciphertext, verifies hash, unwraps content key, decrypts locally.
