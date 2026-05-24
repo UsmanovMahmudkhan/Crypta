@@ -778,3 +778,8 @@ Implemented starter files:
 - Flutter/native provider contracts: [mobile README](/Users/mahmudkhonusmonov/Documents/java/mobile/README.md)
 
 The current service implementation is a no-op scaffold only. It is intentionally not a security implementation.
+
+## 22. Testing Strategy
+
+Backend tests:
+
