@@ -838,3 +838,6 @@ Security tests:
 - Server-side full-text search over messages.
 - Automatic device trust without attestation and user verification.
 - Cross-organization federation.
+- Bot integrations that decrypt content.
+- Data-loss-prevention gateways that silently break E2EE.
+- “Recover my messages” support that stores recovery keys on the backend.
