@@ -313,3 +313,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 
 `POST /api/v1/keys/one-time-prekeys`
 
+- Request: `deviceId`, `keyId`, `algorithm`, `publicKeyBase64`.
+- Response: empty success.
+- Authentication: device-bound session.
+- Authorization: own device only.
+- Security notes: claim atomically once.
