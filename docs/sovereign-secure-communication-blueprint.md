@@ -708,3 +708,8 @@ Phase 1: Authentication, organization, users, devices, WebAuthn, basic admin.
 
 - Implement org/user lifecycle, WebAuthn, device registration, attestation storage, admin audit.
 
+Phase 2: Direct E2EE messaging with Signal-style provider interface.
+
+- Integrate audited provider or native bridge; key bundles, prekeys, ciphertext APIs, no plaintext backend.
+
+Phase 3: WebSocket delivery, offline queue, Redis events, encrypted local storage.
