@@ -38,3 +38,8 @@ public class RoomController {
         mlsGroupService.inviteMember(request);
     }
 
+    @PostMapping("/members/remove")
+    void remove(@Valid @RequestBody MemberChangeRequest request) {
+        mlsGroupService.removeMember(request);
+    }
+}
