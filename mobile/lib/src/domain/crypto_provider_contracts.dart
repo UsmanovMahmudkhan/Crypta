@@ -38,3 +38,8 @@ abstract interface class KeyTransparencyVerifier {
     required Uint8List canonicalEntry,
     required Uint8List inclusionProof,
     required Uint8List signedTreeHead,
+  });
+
+  Future<bool> verifyConsistencyProof({
+    required Uint8List oldSignedTreeHead,
+    required Uint8List newSignedTreeHead,
