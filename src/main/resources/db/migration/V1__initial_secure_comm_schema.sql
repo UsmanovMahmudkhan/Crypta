@@ -283,3 +283,8 @@ CREATE TABLE siem_exports (
 CREATE INDEX idx_users_org ON users(organization_id);
 CREATE INDEX idx_devices_user ON devices(user_id);
 CREATE INDEX idx_devices_org_trust ON devices(organization_id, trust_state);
+CREATE INDEX idx_signed_prekeys_device ON signed_prekeys(device_id);
+CREATE INDEX idx_one_time_prekeys_available ON one_time_prekeys(device_id) WHERE claimed_at IS NULL;
+CREATE INDEX idx_pq_prekeys_available ON pq_prekeys(device_id) WHERE claimed_at IS NULL;
+CREATE INDEX idx_kt_subject ON key_transparency_entries(subject_user_id, log_index);
+CREATE INDEX idx_rooms_org ON rooms(organization_id);
