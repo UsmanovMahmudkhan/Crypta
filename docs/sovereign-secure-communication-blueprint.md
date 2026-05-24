@@ -358,3 +358,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Request: `organizationId`, `name`, `classification`, `policy`.
 - Response: `id`, `createdAt`.
 - Authentication: WebAuthn step-up for creator.
+- Authorization: mission-room create permission.
+- Security notes: initial MLS group created client-side; server stores policy and opaque MLS identifiers.
+- Failure cases: invalid classification, policy weaker than org baseline, lockdown active.
+
+### Room Policy Update
