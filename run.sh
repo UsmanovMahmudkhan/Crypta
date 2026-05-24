@@ -72,3 +72,8 @@ if [[ "$WEBAUTHN_TEST" == *"challengeBase64"* ]]; then
     echo -e "${GREEN}API verification successful! Mock endpoint returned standard scaffold-challenge.${NC}"
 else
     echo -e "${RED}Warning: WebAuthn verification endpoint returned unexpected payload: ${WEBAUTHN_TEST}${NC}"
+fi
+
+echo -e "\n${GREEN}======================================================${NC}"
+echo -e "${GREEN}  DEPLOYMENT SUCCESSFUL                                ${NC}"
+echo -e "${GREEN}  Local Server running at: http://localhost:8080      ${NC}"
