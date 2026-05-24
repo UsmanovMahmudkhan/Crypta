@@ -158,3 +158,8 @@ CREATE TABLE room_members (
     removed_at timestamptz,
     PRIMARY KEY (room_id, user_id)
 );
+
+CREATE TABLE room_policies (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    room_id uuid NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+    min_device_trust text NOT NULL,
