@@ -73,3 +73,8 @@ Core components:
 - Object storage for encrypted attachment blobs only.
 - MDM connectors for device posture.
 - SIEM export pipeline for security/audit events.
+- Append-only key transparency log with client-verifiable proofs.
+
+Trust boundaries:
+
+- Client cryptographic boundary: all encryption/decryption and private key handling.
