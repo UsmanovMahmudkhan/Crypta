@@ -618,3 +618,8 @@ Never export:
 - Full ciphertext unless explicitly configured for forensic retention.
 
 Sinks:
+
+- Splunk HEC, Elastic, Microsoft Sentinel, Chronicle, generic syslog/CEF/JSON over mTLS.
+
+## 16. Emergency Lockdown Design
+
