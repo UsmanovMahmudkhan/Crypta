@@ -183,3 +183,8 @@ The initial PostgreSQL schema is implemented in [V1__initial_secure_comm_schema.
 Tables included:
 
 - `organizations`
+- `users`
+- `user_roles`
+- `devices`
+- `device_attestations`
+- `webauthn_credentials`
