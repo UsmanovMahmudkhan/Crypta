@@ -433,3 +433,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 `POST /api/v1/admin/audit/export`
 
 - Request: `organizationId`, `sinkType`, `from`, `to`.
+- Response: export job id in production.
+- Authentication: compliance admin WebAuthn step-up.
+- Authorization: audit export permission.
+- Security notes: exports metadata/admin/security events, never message plaintext.
+- Failure cases: sink unavailable, invalid range, legal restriction.
