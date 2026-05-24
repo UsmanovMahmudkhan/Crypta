@@ -113,3 +113,8 @@ CREATE TABLE pq_prekeys (
     algorithm text NOT NULL,
     public_key bytea NOT NULL,
     signature bytea NOT NULL,
+    last_resort boolean NOT NULL DEFAULT false,
+    claimed_at timestamptz,
+    expires_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (device_id, key_id)
