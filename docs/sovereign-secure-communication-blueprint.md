@@ -483,3 +483,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 
 ### `typing_signal_privacy_safe`
 
+- Fields: `roomId` or `recipientDeviceId`, `coarseState`, `ttlMillis`.
+- Response: none or ack.
+- Authentication: active device.
+- Authorization: same room/contact.
+- Security notes: optional, short TTL, disabled for high classification by default.
