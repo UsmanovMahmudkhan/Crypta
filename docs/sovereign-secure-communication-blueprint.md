@@ -388,3 +388,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 
 `POST /api/v1/mission-rooms/members/remove`
 
+- Request: `roomId`, `userId`, `reason`.
+- Response: empty success.
+- Authentication: room admin step-up.
+- Authorization: remove permission.
+- Security notes: must trigger MLS commit and epoch change; removed devices stop receiving new messages.
