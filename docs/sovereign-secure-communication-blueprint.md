@@ -138,3 +138,8 @@ Native module boundaries:
 
 Flutter is not suitable for low-level key generation, hardware attestation verification, biometric-gated key unwrap, jailbreak/root detection, or reliable secure screen controls. These require native implementations and security review.
 
+## 8. Cryptographic Architecture
+
+Direct messaging:
+
+- Use Signal Protocol style sessions with PQXDH-capable initial key agreement and Double Ratchet message protection.
