@@ -88,3 +88,8 @@ CREATE TABLE signed_prekeys (
     device_id uuid NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
     key_id text NOT NULL,
     algorithm text NOT NULL,
+    public_key bytea NOT NULL,
+    signature bytea NOT NULL,
+    expires_at timestamptz NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (device_id, key_id)
