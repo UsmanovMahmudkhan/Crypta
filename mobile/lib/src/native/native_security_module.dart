@@ -33,3 +33,8 @@ class DeviceAttestationResult {
     required this.strongBoxOrSecureEnclave,
   });
 
+  final String format;
+  final Uint8List attestationObject;
+  final bool hardwareBacked;
+  final bool strongBoxOrSecureEnclave;
+}
