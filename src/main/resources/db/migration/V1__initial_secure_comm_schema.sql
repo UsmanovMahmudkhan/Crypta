@@ -108,3 +108,8 @@ CREATE TABLE one_time_prekeys (
 
 CREATE TABLE pq_prekeys (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_id uuid NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    key_id text NOT NULL,
+    algorithm text NOT NULL,
+    public_key bytea NOT NULL,
+    signature bytea NOT NULL,
