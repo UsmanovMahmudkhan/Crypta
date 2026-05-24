@@ -278,3 +278,8 @@ CREATE TABLE siem_exports (
     status text NOT NULL DEFAULT 'ACTIVE',
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_users_org ON users(organization_id);
+CREATE INDEX idx_devices_user ON devices(user_id);
+CREATE INDEX idx_devices_org_trust ON devices(organization_id, trust_state);
