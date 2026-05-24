@@ -633,3 +633,8 @@ Actions:
 
 - Emit WebSocket `emergency_lockdown_started`.
 - Revoke or suspend active sessions based on scope.
+- Stop delivery queue release for affected scope.
+- Preserve audit and ciphertext retention according to policy.
+- Export high-priority SIEM event.
+
+Ending lockdown requires explicit signed admin action and fresh client policy sync.
