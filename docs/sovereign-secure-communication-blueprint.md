@@ -558,3 +558,8 @@ Hard truth: key transparency is only valuable if clients actually verify proofs 
 
 ## 13. Secure File Storage Design
 
+Upload flow:
+
+1. Client encrypts file locally with random content key.
+2. Client computes ciphertext hash.
+3. Client wraps content key for recipients or MLS group.
