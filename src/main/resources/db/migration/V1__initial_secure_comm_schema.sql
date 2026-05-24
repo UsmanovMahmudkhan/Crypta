@@ -123,3 +123,8 @@ CREATE TABLE pq_prekeys (
 CREATE TABLE key_transparency_entries (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id uuid NOT NULL REFERENCES organizations(id),
+    subject_user_id uuid NOT NULL REFERENCES users(id),
+    subject_device_id uuid REFERENCES devices(id),
+    entry_type text NOT NULL,
+    canonical_entry_hash bytea NOT NULL,
+    previous_entry_hash bytea,
