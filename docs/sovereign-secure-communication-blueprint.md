@@ -333,3 +333,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 
 `GET /api/v1/keys/bundle/{userId}`
 
+- Request: path `userId`.
+- Response: identity keys and available prekeys per verified device.
+- Authentication: active device session.
+- Authorization: sender has permission to contact recipient.
+- Security notes: include transparency proof reference; atomically claim one-time prekeys.
