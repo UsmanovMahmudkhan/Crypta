@@ -458,3 +458,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 
 - Request/event fields: `messageId`, `senderUserId`, `senderDeviceId`, `recipientUserId`, `recipientDeviceId`, `ciphertext`, `cryptoMetadata`.
 - Response fields: ack `messageId`, `acceptedAt`.
+- Authentication: active device WebSocket session.
+- Authorization: sender may contact recipient device.
+- Security notes: ciphertext only; metadata minimized.
+- Failure cases: recipient blocked, device revoked, malformed envelope.
+
