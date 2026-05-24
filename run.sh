@@ -23,3 +23,8 @@ docker compose build
 if [ $? -ne 0 ]; then
     echo -e "${RED}Error: Docker build failed!${NC}"
     exit 1
+fi
+
+echo -e "\n${YELLOW}[2/4] Launching orchestrator in background...${NC}"
+docker compose down
+docker compose up -d
