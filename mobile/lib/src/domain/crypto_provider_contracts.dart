@@ -18,3 +18,8 @@ abstract interface class GroupCryptoProvider {
   Future<Uint8List> createGroupCommit({
     required String roomId,
     required List<String> memberDeviceIds,
+  });
+
+  Future<Uint8List> encryptGroupMessage({
+    required String roomId,
+    required Uint8List plaintext,
