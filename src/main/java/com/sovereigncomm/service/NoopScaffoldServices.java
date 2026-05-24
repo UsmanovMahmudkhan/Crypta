@@ -123,3 +123,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     @Override
     public void appendSecurityEvent(String eventType, Map<String, Object> metadata) {
     }
+
+    @Override
+    public void exportAudit(AuditExportRequest request) {
+    }
+
