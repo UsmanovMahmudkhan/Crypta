@@ -29,3 +29,6 @@ USER sovereign
 
 # Expose the default Spring Boot port
 EXPOSE 8080
+
+# Configure execution entrypoint
+ENTRYPOINT ["java", "-XX:+UseG1GC", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
