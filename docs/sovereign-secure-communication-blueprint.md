@@ -518,3 +518,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 - Failure cases: client policy cache stale.
 
 ### `emergency_lockdown_started`
+
+- Fields: `lockdownId`, `scope`, `roomId`, `startedAt`, `reasonCode`.
+- Response: ack and local enforcement status.
+- Authentication: server-to-device.
+- Authorization: affected devices.
