@@ -678,3 +678,8 @@ Risk: push metadata leakage.
 
 Risk: admin abuse.
 
+- Mitigation: least privilege, dual control, signed admin actions, tamper-evident audit, SIEM alerting.
+
+Risk: MLS implementation mistakes.
+
+- Mitigation: audited MLS library, conformance tests, external cryptographic review, epoch-state fuzzing.
