@@ -33,3 +33,8 @@ CREATE TABLE devices (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES users(id),
     organization_id uuid NOT NULL REFERENCES organizations(id),
+    platform text NOT NULL,
+    device_name text NOT NULL,
+    device_signing_public_key bytea NOT NULL,
+    trust_state text NOT NULL DEFAULT 'PENDING_VERIFICATION',
+    hardware_backed boolean NOT NULL DEFAULT false,
