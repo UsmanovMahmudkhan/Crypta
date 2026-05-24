@@ -18,3 +18,8 @@ public class OrganizationController {
         this.organizationService = organizationService;
     }
 
+    @PostMapping
+    IdResponse create(@Valid @RequestBody OrganizationCreateRequest request) {
+        return organizationService.createOrganization(request);
+    }
+}
