@@ -253,3 +253,8 @@ CREATE TABLE emergency_lockdowns (
     ended_by uuid REFERENCES users(id),
     ended_at timestamptz
 );
+
+CREATE TABLE mdm_devices (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id uuid NOT NULL REFERENCES organizations(id),
+    device_id uuid REFERENCES devices(id),
