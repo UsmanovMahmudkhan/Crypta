@@ -538,3 +538,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 ## 12. Key Transparency Design
 
 Model:
+
+- Append-only log of identity key and device trust changes.
+- Each entry is canonicalized, hashed, indexed, and included in a Merkle tree.
+- Server signs tree heads; independent monitors verify consistency.
+- Clients verify inclusion and consistency proofs before accepting new keys.
