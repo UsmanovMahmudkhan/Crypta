@@ -103,3 +103,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     }
 
     @Override
+    public void enqueueForRecipient(UUID recipientDeviceId, String encryptedEnvelope) {
+    }
+
+    @Override
+    public void sendGenericNotification(UUID deviceId, String urgency) {
