@@ -128,3 +128,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     public void exportAudit(AuditExportRequest request) {
     }
 
+    @Override
+    public void recordSignedAction(String signedAdminActionEnvelope) {
+    }
+
+    @Override
