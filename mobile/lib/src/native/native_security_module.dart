@@ -8,3 +8,8 @@ abstract interface class SecureStorageProvider {
 
   Future<Uint8List> unwrapKey({
     required String hardwareKeyAlias,
+    required Uint8List wrappedKey,
+  });
+}
+
+abstract interface class DeviceAttestationProvider {
