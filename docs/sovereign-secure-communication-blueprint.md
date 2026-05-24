@@ -488,3 +488,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 - Authentication: active device.
 - Authorization: same room/contact.
 - Security notes: optional, short TTL, disabled for high classification by default.
+- Failure cases: policy disabled, rate limit.
+
+### `device_revoked`
+
+- Fields: `deviceId`, `userId`, `revokedAt`, `reasonCode`.
