@@ -43,3 +43,8 @@ CREATE TABLE devices (
     revoked_at timestamptz,
     revoke_reason text,
     created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE device_attestations (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
