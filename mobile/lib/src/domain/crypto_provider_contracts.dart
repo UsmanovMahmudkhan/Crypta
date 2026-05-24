@@ -13,3 +13,8 @@ abstract interface class DirectCryptoProvider {
     required Map<String, Uint8List> associatedData,
   });
 }
+
+abstract interface class GroupCryptoProvider {
+  Future<Uint8List> createGroupCommit({
+    required String roomId,
+    required List<String> memberDeviceIds,
