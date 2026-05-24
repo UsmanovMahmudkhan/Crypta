@@ -453,3 +453,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 ## 11. WebSocket Event Design
 
 All WebSocket connections are authenticated as a specific device. Payloads are envelopes with `type`, `eventId`, `serverTime`, `recipientDeviceId`, and type-specific body. Server must not decrypt ciphertext fields.
+
+### `encrypted_direct_message`
+
+- Request/event fields: `messageId`, `senderUserId`, `senderDeviceId`, `recipientUserId`, `recipientDeviceId`, `ciphertext`, `cryptoMetadata`.
+- Response fields: ack `messageId`, `acceptedAt`.
