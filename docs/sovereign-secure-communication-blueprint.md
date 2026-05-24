@@ -798,3 +798,8 @@ Mobile tests:
 - Local encrypted database recovery tests.
 - Offline message queue tests.
 - MLS epoch transition tests.
+- Screenshot prevention best-effort tests per OS.
+
+Security tests:
+
+- Cryptographic test vectors from selected libraries.
