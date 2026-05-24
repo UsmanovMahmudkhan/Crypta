@@ -183,3 +183,8 @@ CREATE TABLE encrypted_messages (
     sender_device_id uuid NOT NULL REFERENCES devices(id),
     recipient_user_id uuid REFERENCES users(id),
     recipient_device_id uuid REFERENCES devices(id),
+    message_kind text NOT NULL,
+    ciphertext bytea NOT NULL,
+    ciphertext_sha256 bytea NOT NULL,
+    crypto_metadata jsonb NOT NULL,
+    server_received_at timestamptz NOT NULL DEFAULT now(),
