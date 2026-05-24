@@ -168,3 +168,8 @@ CREATE TABLE room_policies (
     attachments_allowed boolean NOT NULL DEFAULT true,
     screenshot_restriction text NOT NULL DEFAULT 'BEST_EFFORT',
     forwarding_allowed boolean NOT NULL DEFAULT false,
+    verified_devices_only boolean NOT NULL DEFAULT true,
+    policy_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+    version integer NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (room_id, version)
