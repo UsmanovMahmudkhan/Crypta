@@ -23,3 +23,8 @@ public class KeyController {
 
     public KeyController(KeyService keyService, PreKeyService preKeyService) {
         this.keyService = keyService;
+        this.preKeyService = preKeyService;
+    }
+
+    @PostMapping("/identity")
+    void uploadIdentityKey(@Valid @RequestBody PublicKeyUploadRequest request) {
