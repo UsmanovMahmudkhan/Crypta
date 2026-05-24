@@ -13,3 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/api/v1/mission-rooms")
+public class RoomController {
+    private final MLSGroupService mlsGroupService;
+    private final RoomPolicyService roomPolicyService;
+
