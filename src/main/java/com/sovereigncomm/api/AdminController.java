@@ -7,9 +7,13 @@ import com.sovereigncomm.service.AuditService;
 import com.sovereigncomm.service.EmergencyLockdownService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -37,5 +41,10 @@ public class AdminController {
     @PostMapping("/emergency-lockdowns")
     void startLockdown(@Valid @RequestBody EmergencyLockdownRequest request) {
         emergencyLockdownService.startLockdown(request);
+    }
+
+    @PostMapping("/emergency-lockdowns/{lockdownId}/end")
+    void endLockdown(@PathVariable UUID lockdownId, @RequestBody(required = false) Map<String, String> body) {
+        emergencyLockdownService.endLockdown(lockdownId, body == null ? "api_request" : body.getOrDefault("reason", "api_request"));
     }
 }
