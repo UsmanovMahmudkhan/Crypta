@@ -53,3 +53,8 @@ Primary attacker goals:
 - Minimal metadata, generic push notifications, immutable audit trails.
 - Zero-trust authorization, least privilege, secure defaults, defense in depth.
 
+## 4. Non-Goals
+
+- Do not claim the product is unhackable, military-grade, or immune to endpoint compromise.
+- Do not implement Signal Protocol, PQXDH, MLS, AEADs, KDFs, signatures, or Merkle-tree security from scratch in product code.
+- Do not support plaintext recovery for users who lose all verified devices unless enterprise escrow is explicitly chosen with clear loss of E2EE guarantees.
