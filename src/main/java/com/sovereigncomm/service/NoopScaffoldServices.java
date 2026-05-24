@@ -63,3 +63,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     @Override
     public void uploadSignedPreKey(PreKeyUploadRequest request) {
     }
+
+    @Override
+    public void uploadOneTimePreKey(PreKeyUploadRequest request) {
+    }
+
