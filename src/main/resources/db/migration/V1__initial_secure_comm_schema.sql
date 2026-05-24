@@ -188,3 +188,8 @@ CREATE TABLE encrypted_messages (
     ciphertext_sha256 bytea NOT NULL,
     crypto_metadata jsonb NOT NULL,
     server_received_at timestamptz NOT NULL DEFAULT now(),
+    expires_at timestamptz,
+    deleted_at timestamptz,
+    CHECK (message_kind IN ('DIRECT', 'MLS_GROUP'))
+);
+
