@@ -42,3 +42,8 @@ while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
     echo -e "Attempt ${ATTEMPT}/${MAX_ATTEMPTS} to contact health check..."
     
     # Send request and extract HTTP response code and body
+    RESPONSE=$(curl -s -w "\n%{http_code}" "$HEALTH_URL" 2>/dev/null)
+    HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+    BODY=$(echo "$RESPONSE" | sed '$d')
+    
+    if [ "$HTTP_STATUS" -eq 200 ] && [[ "$BODY" == *"UP"* ]]; then
