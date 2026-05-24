@@ -32,3 +32,8 @@ public class AdminController {
     @PostMapping("/audit/export")
     void exportAudit(@Valid @RequestBody AuditExportRequest request) {
         auditService.exportAudit(request);
+    }
+
+    @PostMapping("/emergency-lockdowns")
+    void startLockdown(@Valid @RequestBody EmergencyLockdownRequest request) {
+        emergencyLockdownService.startLockdown(request);
