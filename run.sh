@@ -28,3 +28,8 @@ fi
 echo -e "\n${YELLOW}[2/4] Launching orchestrator in background...${NC}"
 docker compose down
 docker compose up -d
+
+echo -e "\n${YELLOW}[3/4] Waiting for services to become healthy...${NC}"
+echo -e "Polling database and backend startup status..."
+
+# Health check polling configuration
