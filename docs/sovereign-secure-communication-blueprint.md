@@ -478,3 +478,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 - Response: ack.
 - Authentication: recipient device.
 - Authorization: receipt for own delivery only.
+- Security notes: no read receipt by default for high-sensitivity rooms unless policy allows.
+- Failure cases: unknown message, receipt disabled.
+
+### `typing_signal_privacy_safe`
+
