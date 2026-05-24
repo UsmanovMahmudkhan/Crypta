@@ -653,3 +653,8 @@ Production baseline:
 - Centralized secrets manager with rotation.
 - Immutable infrastructure and signed containers.
 
+Operational controls:
+
+- Separate production/admin networks.
+- Just-in-time admin access.
+- Break-glass accounts with hardware security keys.
