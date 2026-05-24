@@ -503,3 +503,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 
 - Fields: `userId`, `deviceId`, `keyVersion`, `transparencyProofRef`.
 - Response: client proof verification result in production telemetry.
+- Authentication: server-to-device event.
+- Authorization: contacts/rooms affected.
+- Security notes: clients must verify transparency before trusting.
+- Failure cases: proof invalid triggers safety warning and send block.
+
