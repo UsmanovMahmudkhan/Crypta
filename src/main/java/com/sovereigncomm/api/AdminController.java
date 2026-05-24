@@ -12,3 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/api/v1/admin")
+public class AdminController {
+    private final AdminGovernanceService adminGovernanceService;
+    private final AuditService auditService;
+    private final EmergencyLockdownService emergencyLockdownService;
