@@ -248,3 +248,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Response: `id`, `createdAt`.
 - Authentication: user WebAuthn ceremony plus existing device approval for high-risk orgs.
 - Authorization: user can add own device subject to org policy.
+- Security notes: starts as pending until attestation and verification pass.
+- Failure cases: attestation invalid, MDM noncompliant, device limit reached, org lockdown.
+
+### WebAuthn Registration
+
