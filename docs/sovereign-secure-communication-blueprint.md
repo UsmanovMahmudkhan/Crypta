@@ -463,3 +463,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 - Security notes: ciphertext only; metadata minimized.
 - Failure cases: recipient blocked, device revoked, malformed envelope.
 
+### `encrypted_group_message`
+
+- Fields: `messageId`, `roomId`, `mlsGroupId`, `epoch`, `senderDeviceId`, `ciphertext`, `cryptoMetadata`.
+- Response: ack `messageId`, `acceptedAt`.
+- Authentication: active verified device.
