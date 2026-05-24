@@ -758,3 +758,8 @@ Initial scaffold:
     ├── java/com/sovereigncomm/
     │   ├── api/
     │   ├── config/
+    │   ├── crypto/
+    │   └── service/
+    └── resources/
+        ├── application.yml
+        └── db/migration/V1__initial_secure_comm_schema.sql
