@@ -58,3 +58,8 @@ CREATE TABLE device_attestations (
 );
 
 CREATE TABLE webauthn_credentials (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    credential_id bytea NOT NULL UNIQUE,
+    public_key_cose bytea NOT NULL,
+    signature_count bigint NOT NULL DEFAULT 0,
