@@ -733,3 +733,8 @@ Phase 7: MLS group encryption.
 - MLS provider integration, group lifecycle, welcome/commit handling, membership change key rotation.
 
 Phase 8: MDM, SIEM, emergency lockdown.
+
+- Device posture enforcement, SIEM exports, lockdown workflows, remote wipe hooks.
+
+Phase 9: Hardening, penetration testing, cryptographic audit, compliance preparation.
+
