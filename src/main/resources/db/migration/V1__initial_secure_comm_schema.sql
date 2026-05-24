@@ -38,3 +38,8 @@ CREATE TABLE devices (
     device_signing_public_key bytea NOT NULL,
     trust_state text NOT NULL DEFAULT 'PENDING_VERIFICATION',
     hardware_backed boolean NOT NULL DEFAULT false,
+    strongbox_or_secure_enclave boolean NOT NULL DEFAULT false,
+    mdm_compliant boolean,
+    revoked_at timestamptz,
+    revoke_reason text,
+    created_at timestamptz NOT NULL DEFAULT now(),
