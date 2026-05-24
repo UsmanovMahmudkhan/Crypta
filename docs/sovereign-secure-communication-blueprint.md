@@ -818,3 +818,8 @@ Security tests:
 - Key transparency inclusion and consistency proofs verified by clients.
 - One-time prekeys claimed atomically.
 - PQXDH downgrade blocked.
+- MLS commit and epoch logic audited.
+- Verified devices enforced for sensitive rooms.
+- Device revocation wipes local secrets where OS permits.
+- Push payloads contain no plaintext preview.
+- Admin actions are signed, least-privileged, and audited.
