@@ -53,3 +53,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
 
     @Override
     public void uploadIdentityKey(PublicKeyUploadRequest request) {
+    }
+
+    @Override
+    public KeyBundleResponse fetchKeyBundle(UUID userId) {
+        return new KeyBundleResponse(userId, UUID.randomUUID(), List.of(), List.of());
