@@ -533,3 +533,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 - Authentication: server-to-device.
 - Authorization: affected devices.
 - Security notes: require fresh policy sync before resuming.
+- Failure cases: stale client remains locked until sync.
+
+## 12. Key Transparency Design
+
+Model:
