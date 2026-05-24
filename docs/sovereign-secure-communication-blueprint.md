@@ -48,3 +48,8 @@ Primary attacker goals:
 - PQ-aware direct key agreement using PQXDH where supported.
 - MLS for group messaging with membership-change key rotation.
 - Key transparency for public key replacement detection.
+- Verified devices only for sensitive rooms.
+- Hardware-backed key protection on iOS and Android.
+- Minimal metadata, generic push notifications, immutable audit trails.
+- Zero-trust authorization, least privilege, secure defaults, defense in depth.
+
