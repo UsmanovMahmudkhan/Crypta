@@ -13,3 +13,8 @@ abstract interface class SecureStorageProvider {
 }
 
 abstract interface class DeviceAttestationProvider {
+  Future<DeviceAttestationResult> attestDevice({required Uint8List challenge});
+}
+
+abstract interface class BiometricUnlockProvider {
+  Future<bool> unlockForSensitiveAction({required String localizedReason});
