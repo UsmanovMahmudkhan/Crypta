@@ -323,3 +323,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 `POST /api/v1/keys/pq-prekeys`
 
 - Request: `deviceId`, `keyId`, `algorithm`, `publicKeyBase64`, `signatureBase64`.
+- Response: empty success.
+- Authentication: device-bound session.
+- Authorization: own device only.
+- Security notes: distinguish one-time PQ prekeys and last-resort signed PQ prekey.
+- Failure cases: unsupported PQ algorithm, invalid signature, quota exceeded.
