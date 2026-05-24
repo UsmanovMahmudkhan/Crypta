@@ -17,3 +17,8 @@ public class AdminController {
     private final AdminGovernanceService adminGovernanceService;
     private final AuditService auditService;
     private final EmergencyLockdownService emergencyLockdownService;
+
+    public AdminController(AdminGovernanceService adminGovernanceService, AuditService auditService, EmergencyLockdownService emergencyLockdownService) {
+        this.adminGovernanceService = adminGovernanceService;
+        this.auditService = auditService;
+        this.emergencyLockdownService = emergencyLockdownService;
