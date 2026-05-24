@@ -138,3 +138,8 @@ CREATE TABLE key_transparency_entries (
 CREATE TABLE rooms (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id uuid NOT NULL REFERENCES organizations(id),
+    name text NOT NULL,
+    classification text NOT NULL,
+    room_type text NOT NULL DEFAULT 'MISSION_ROOM',
+    mls_group_id text,
+    legal_hold_enabled boolean NOT NULL DEFAULT false,
