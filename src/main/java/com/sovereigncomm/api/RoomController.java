@@ -23,3 +23,8 @@ public class RoomController {
         this.roomPolicyService = roomPolicyService;
     }
 
+    @PostMapping
+    IdResponse create(@Valid @RequestBody RoomCreateRequest request) {
+        return mlsGroupService.createMissionRoom(request);
+    }
+
