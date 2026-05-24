@@ -303,3 +303,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Failure cases: stale device, invalid signature, downgrade algorithm, log append failure.
 
 `POST /api/v1/keys/signed-prekeys`
+
+- Request: `deviceId`, `keyId`, `algorithm`, `publicKeyBase64`, `signatureBase64`.
+- Response: empty success.
+- Authentication: device-bound session.
+- Authorization: own device only.
