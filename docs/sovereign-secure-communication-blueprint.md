@@ -18,3 +18,8 @@ Direct messages use a Signal-style provider boundary with PQXDH-capable session 
 
 The hardest parts are cryptographic correctness, device compromise recovery, key transparency, usable verification UX, MLS lifecycle correctness, and enterprise compliance features that do not destroy E2EE. These areas require external cryptographic and mobile security review before production.
 
+## 2. Threat Model
+
+Assumptions:
+
+- Networks are monitored and actively attacked.
