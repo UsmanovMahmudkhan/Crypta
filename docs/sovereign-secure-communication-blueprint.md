@@ -83,3 +83,8 @@ Trust boundaries:
 - External boundary: FCM/APNs, MDM, SIEM, object storage, identity providers.
 
 ## 6. Backend Architecture
+
+Recommended initial shape: modular Spring Boot monolith with strict package boundaries and service interfaces. Split into separately deployable services only after APIs and audit semantics stabilize.
+
+Required services:
+
