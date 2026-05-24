@@ -543,3 +543,8 @@ Model:
 - Each entry is canonicalized, hashed, indexed, and included in a Merkle tree.
 - Server signs tree heads; independent monitors verify consistency.
 - Clients verify inclusion and consistency proofs before accepting new keys.
+
+Entry contents:
+
+- `organizationId`, `subjectUserId`, `subjectDeviceId`, `entryType`, key hash, previous key hash, device state, timestamp, issuer signature.
+
