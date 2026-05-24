@@ -118,3 +118,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     @Override
     public Map<String, Object> createEncryptedDownload(UUID attachmentId) {
         return Map.of("attachmentId", attachmentId, "url", "https://object-storage.example.invalid/presigned");
+    }
+
+    @Override
+    public void appendSecurityEvent(String eventType, Map<String, Object> metadata) {
+    }
