@@ -548,3 +548,8 @@ Entry contents:
 
 - `organizationId`, `subjectUserId`, `subjectDeviceId`, `entryType`, key hash, previous key hash, device state, timestamp, issuer signature.
 
+Mitigations:
+
+- Key substitution: client detects unexpected key changes or missing log inclusion.
+- Split-view attack: require gossip/monitoring, checkpoint pinning, and SIEM alerting on inconsistent tree heads.
+- Malicious admin: admin can request key actions but cannot forge device signatures or hide append-only evidence if monitors are effective.
