@@ -698,3 +698,8 @@ Dangerous mistakes:
 - Trusting server-provided key bundles without transparency verification.
 - Sending notification previews.
 
+## 19. Implementation Roadmap
+
+Phase 0: Threat model, architecture, library selection, security review plan.
+
+- Deliver threat model, data classification, crypto library shortlist, mobile native feasibility spike, audit plan.
