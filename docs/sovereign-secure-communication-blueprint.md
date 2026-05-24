@@ -283,3 +283,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Failure cases: user disabled, too many attempts, org lockdown.
 
 `POST /api/v1/webauthn/login/finish`
+
+- Request: `userId`, `credentialJson`.
+- Response: device-bound session token and refresh metadata in production.
+- Authentication: WebAuthn assertion.
+- Authorization: active user, compliant device.
