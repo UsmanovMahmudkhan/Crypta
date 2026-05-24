@@ -148,3 +148,7 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     public void endLockdown(UUID lockdownId, String reason) {
     }
 
+    private static IdResponse created() {
+        return new IdResponse(UUID.randomUUID(), Instant.now());
+    }
+}
