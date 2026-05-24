@@ -208,3 +208,8 @@ Tables included:
 Schema rules:
 
 - No plaintext `message_body` column.
+- No plaintext attachment column.
+- `encrypted_messages.ciphertext` and `encrypted_attachments.object_key` reference ciphertext only.
+- Crypto metadata is separate JSONB and must contain no plaintext user content.
+- Retention is represented with `expires_at`, `retention_expires_at`, and policy versions.
+- Soft delete is limited to message/attachment lifecycle where retention policy allows it; audit and key transparency entries are append-only.
