@@ -243,3 +243,8 @@ CREATE TABLE admin_actions (
 );
 
 CREATE TABLE emergency_lockdowns (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id uuid NOT NULL REFERENCES organizations(id),
+    room_id uuid REFERENCES rooms(id),
+    scope text NOT NULL,
+    reason text NOT NULL,
