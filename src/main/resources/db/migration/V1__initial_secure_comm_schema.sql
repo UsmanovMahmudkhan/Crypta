@@ -93,3 +93,8 @@ CREATE TABLE signed_prekeys (
     expires_at timestamptz NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (device_id, key_id)
+);
+
+CREATE TABLE one_time_prekeys (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_id uuid NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
