@@ -28,3 +28,8 @@ Assumptions:
 - Push notification providers are untrusted.
 - User devices can be stolen, phished, jailbroken, rooted, or malware-infected.
 - Attackers may attempt public-key substitution and harvest encrypted traffic for later cryptanalysis.
+- Screenshots, photos of screens, compromised endpoints, and human forwarding cannot be fully prevented.
+
+Primary attacker goals:
+
+- Read message or attachment plaintext.
