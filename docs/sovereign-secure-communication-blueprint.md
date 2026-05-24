@@ -118,3 +118,8 @@ Backend invariants:
 - Use tamper-evident audit hashes for admin and policy actions.
 
 ## 7. Mobile Architecture
+
+Flutter layers:
+
+- Presentation: mission room UI, verification UI, safety numbers, emergency lock UI, admin UX where allowed.
+- Application: workflows, state machines, retry policy, sync orchestration.
