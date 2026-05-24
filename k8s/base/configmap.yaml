@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sovereign-comm-config
+data:
+  SPRING_PROFILES_ACTIVE: prod
+  WEBAUTHN_RP_ID: secure.example.com
+  WEBAUTHN_RP_NAME: Sovereign Comm
+  WEBAUTHN_ALLOWED_ORIGINS: https://secure.example.com
