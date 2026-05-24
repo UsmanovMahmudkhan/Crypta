@@ -718,3 +718,8 @@ Phase 3: WebSocket delivery, offline queue, Redis events, encrypted local storag
 
 Phase 4: Key transparency log and device verification.
 
+- Merkle log, signed tree heads, client proof verification, safety number UX.
+
+Phase 5: Encrypted attachments and object storage.
+
+- Client encryption, wrapped keys, presigned upload/download, retention.
