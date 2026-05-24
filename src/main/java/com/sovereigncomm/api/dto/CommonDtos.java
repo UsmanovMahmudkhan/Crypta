@@ -58,3 +58,8 @@ public final class CommonDtos {
     }
 
     public record AuditExportRequest(@NotNull UUID organizationId, @NotBlank String sinkType, Instant from, Instant to) {
+    }
+
+    public record EmergencyLockdownRequest(@NotNull UUID organizationId, UUID roomId, @NotBlank String reason, @NotBlank String scope) {
+    }
+}
