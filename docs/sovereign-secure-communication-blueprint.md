@@ -143,3 +143,8 @@ Flutter is not suitable for low-level key generation, hardware attestation verif
 Direct messaging:
 
 - Use Signal Protocol style sessions with PQXDH-capable initial key agreement and Double Ratchet message protection.
+- Store identity public keys, signed prekeys, one-time prekeys, and PQ prekeys on the server.
+- Use associated data binding: sender device, recipient device, org, conversation id, key versions, and protocol version.
+- Clients must fail closed on downgrade from PQXDH where a recipient device advertises PQ support.
+
+Group messaging:
