@@ -28,3 +28,8 @@ abstract interface class GroupCryptoProvider {
 
   Future<Uint8List> decryptGroupMessage({
     required String roomId,
+    required Uint8List ciphertextEnvelope,
+    required Map<String, Uint8List> associatedData,
+  });
+}
+
