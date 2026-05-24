@@ -23,3 +23,8 @@ abstract interface class BiometricUnlockProvider {
 abstract interface class SecureScreenProvider {
   Future<void> enableSecureScreen();
   Future<void> disableSecureScreenForAllowedViews();
+}
+
+class DeviceAttestationResult {
+  const DeviceAttestationResult({
+    required this.format,
