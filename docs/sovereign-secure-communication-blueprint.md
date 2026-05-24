@@ -218,3 +218,8 @@ Schema rules:
 
 All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate limiting, structured audit, and body logging disabled for sensitive routes.
 
+### Organization Setup
+
+`POST /api/v1/organizations`
+
+- Request: `name`, `jurisdiction`, `externalTenantId`.
