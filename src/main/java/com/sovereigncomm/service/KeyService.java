@@ -7,3 +7,5 @@ import java.util.UUID;
 
 public interface KeyService {
     void uploadIdentityKey(PublicKeyUploadRequest request);
+    KeyBundleResponse fetchKeyBundle(UUID userId);
+}
