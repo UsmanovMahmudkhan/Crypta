@@ -13,3 +13,7 @@ RUN mvn clean package -DskipTests
 # Runtime Stage
 # ==============================================================================
 FROM eclipse-temurin:21-jre-alpine AS runner
+WORKDIR /app
+
+# Create a secure, non-privileged system group and user
+RUN addgroup -S sovereign && adduser -S sovereign -G sovereign
