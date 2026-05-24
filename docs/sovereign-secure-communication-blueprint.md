@@ -168,3 +168,8 @@ Required provider interfaces:
 - `SecureStorageProvider`
 - `DeviceAttestationProvider`
 
+External audit required:
+
+- Library choice and binding code.
+- PQXDH downgrade handling.
+- MLS epoch handling.
