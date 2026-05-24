@@ -563,3 +563,8 @@ Upload flow:
 1. Client encrypts file locally with random content key.
 2. Client computes ciphertext hash.
 3. Client wraps content key for recipients or MLS group.
+4. Backend issues presigned upload target.
+5. Object storage receives ciphertext only.
+6. Backend stores object key, ciphertext hash, size, retention, crypto metadata.
+
+Download flow:
