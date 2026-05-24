@@ -803,3 +803,8 @@ Mobile tests:
 Security tests:
 
 - Cryptographic test vectors from selected libraries.
+- Fuzz ciphertext envelope parsers.
+- Attempt plaintext injection into backend APIs.
+- Key substitution and transparency proof failure simulations.
+- Device revocation and remote wipe simulations.
+- Admin privilege escalation tests.
