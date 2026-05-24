@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # ==============================================================================
+  # Database Service (PostgreSQL 16)
+  # ==============================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: sovereign-db
+    environment:
+      POSTGRES_DB: sovereign_comm
+      POSTGRES_USER: sovereign_comm
+      POSTGRES_PASSWORD: sovereign_comm
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sovereign_comm -d sovereign_comm"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==============================================================================
+  # Backend Service (Spring Boot Monolith)
+  # ==============================================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sovereign-app
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/sovereign_comm
+      DATABASE_USERNAME: sovereign_comm
+      DATABASE_PASSWORD: sovereign_comm
+      WEBAUTHN_RP_ID: localhost
+      WEBAUTHN_RP_NAME: Sovereign Comm
+      WEBAUTHN_ALLOWED_ORIGINS: http://localhost:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+# ==============================================================================
+# Persistent Volumes Configuration
+# ==============================================================================
+volumes:
+  pgdata:
+    driver: local
