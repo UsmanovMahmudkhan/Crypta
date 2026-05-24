@@ -138,3 +138,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
 
     @Override
     public void exportEvent(String normalizedAuditEventJson) {
+    }
+
+    @Override
+    public void startLockdown(EmergencyLockdownRequest request) {
+    }
