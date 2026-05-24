@@ -18,3 +18,8 @@ CREATE TABLE users (
     display_name text NOT NULL,
     status text NOT NULL DEFAULT 'INVITED',
     created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (organization_id, email)
+);
+
+CREATE TABLE user_roles (
