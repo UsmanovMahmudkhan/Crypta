@@ -37,3 +37,5 @@ public class AdminController {
     @PostMapping("/emergency-lockdowns")
     void startLockdown(@Valid @RequestBody EmergencyLockdownRequest request) {
         emergencyLockdownService.startLockdown(request);
+    }
+}
