@@ -18,3 +18,8 @@ public class UserController {
         this.userService = userService;
     }
 
+    @PostMapping
+    IdResponse register(@Valid @RequestBody UserRegisterRequest request) {
+        return userService.registerUser(request);
+    }
+}
