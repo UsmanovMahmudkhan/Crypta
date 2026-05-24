@@ -57,3 +57,8 @@ while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
 done
 
 if [ "$HEALTHY" = false ]; then
+    echo -e "\n${RED}Error: App failed to become healthy within the timeout period.${NC}"
+    echo -e "${YELLOW}Dumping application container logs for troubleshooting:${NC}"
+    docker compose logs app
+    echo -e "${BLUE}======================================================${NC}"
+    exit 1
