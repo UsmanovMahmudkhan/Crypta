@@ -7,3 +7,5 @@ import java.util.UUID;
 
 public interface DeviceTrustService {
     IdResponse registerDevice(DeviceRegisterRequest request);
+    void revokeDevice(UUID deviceId, String reason);
+}
