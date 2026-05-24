@@ -293,3 +293,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 
 ### Key Uploads
 
+`POST /api/v1/keys/identity`
+
+- Request: `deviceId`, `algorithm`, `publicKeyBase64`, `signatureBase64`.
+- Response: empty success.
+- Authentication: device-bound session.
