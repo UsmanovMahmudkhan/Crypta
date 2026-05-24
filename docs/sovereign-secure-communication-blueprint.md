@@ -198,3 +198,8 @@ Tables included:
 - `room_policies`
 - `encrypted_messages`
 - `encrypted_attachments`
+- `message_delivery_receipts`
+- `audit_events`
+- `admin_actions`
+- `emergency_lockdowns`
+- `mdm_devices`
