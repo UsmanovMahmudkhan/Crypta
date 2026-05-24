@@ -693,3 +693,8 @@ Dangerous mistakes:
 - Logging plaintext or request bodies.
 - Implementing crypto primitives manually.
 - Allowing unverified devices into sensitive rooms.
+- Reusing attachment keys.
+- Treating jailbreak/root detection as a guarantee.
+- Trusting server-provided key bundles without transparency verification.
+- Sending notification previews.
+
