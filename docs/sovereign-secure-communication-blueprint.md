@@ -258,3 +258,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 - Request: path `userId`.
 - Response: challenge and public key credential options.
 - Authentication: invite token or existing authenticated session.
+- Authorization: user registration scope.
+- Security notes: short challenge TTL; bind to origin/RP ID.
+- Failure cases: expired invite, invalid origin, user disabled.
+
+`POST /api/v1/webauthn/registration/finish`
