@@ -588,3 +588,8 @@ Supported posture signals:
 - Hardware-backed key availability.
 - Remote wipe eligibility.
 
+Providers:
+
+- Microsoft Intune, Jamf, VMware Workspace ONE, MobileIron/Ivanti, Android Enterprise, Apple Business Manager integrations.
+
+Enforcement:
