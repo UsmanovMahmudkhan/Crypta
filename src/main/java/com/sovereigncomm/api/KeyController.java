@@ -28,3 +28,8 @@ public class KeyController {
 
     @PostMapping("/identity")
     void uploadIdentityKey(@Valid @RequestBody PublicKeyUploadRequest request) {
+        keyService.uploadIdentityKey(request);
+    }
+
+    @PostMapping("/signed-prekeys")
+    void uploadSignedPreKey(@Valid @RequestBody PreKeyUploadRequest request) {
