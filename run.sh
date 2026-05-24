@@ -77,3 +77,8 @@ fi
 echo -e "\n${GREEN}======================================================${NC}"
 echo -e "${GREEN}  DEPLOYMENT SUCCESSFUL                                ${NC}"
 echo -e "${GREEN}  Local Server running at: http://localhost:8080      ${NC}"
+echo -e "${GREEN}  Database exposed at: jdbc:postgresql://localhost:5433/sovereign_comm${NC}"
+echo -e "${GREEN}======================================================${NC}"
+echo -e "To view logs, run:       docker compose logs -f"
+echo -e "To shut down, run:       docker compose down"
+echo -e "${GREEN}======================================================${NC}"
