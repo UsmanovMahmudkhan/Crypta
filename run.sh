@@ -33,3 +33,7 @@ echo -e "\n${YELLOW}[3/4] Waiting for services to become healthy...${NC}"
 echo -e "Polling database and backend startup status..."
 
 # Health check polling configuration
+HEALTH_URL="http://localhost:8080/actuator/health"
+MAX_ATTEMPTS=40
+ATTEMPT=1
+HEALTHY=false
