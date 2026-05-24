@@ -33,3 +33,8 @@ public class RoomController {
         roomPolicyService.updatePolicy(request);
     }
 
+    @PostMapping("/members/invite")
+    void invite(@Valid @RequestBody MemberChangeRequest request) {
+        mlsGroupService.inviteMember(request);
+    }
+
