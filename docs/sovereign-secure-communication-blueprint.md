@@ -673,3 +673,8 @@ Risk: malicious key substitution.
 - Mitigation: device signatures, key transparency, safety numbers, independent monitors, send-block on proof failure.
 
 Risk: push metadata leakage.
+
+- Mitigation: generic pushes only, no sender/room/message preview, fetch after unlock.
+
+Risk: admin abuse.
+
