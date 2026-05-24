@@ -508,3 +508,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 - Security notes: clients must verify transparency before trusting.
 - Failure cases: proof invalid triggers safety warning and send block.
 
+### `room_policy_changed`
+
+- Fields: `roomId`, `policyVersion`, `changedBy`, `effectiveAt`.
+- Response: ack and optional MLS commit status.
+- Authentication: server-to-device.
