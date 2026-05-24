@@ -13,3 +13,8 @@ CREATE TABLE organizations (
 
 CREATE TABLE users (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id uuid NOT NULL REFERENCES organizations(id),
+    email citext NOT NULL,
+    display_name text NOT NULL,
+    status text NOT NULL DEFAULT 'INVITED',
+    created_at timestamptz NOT NULL DEFAULT now(),
