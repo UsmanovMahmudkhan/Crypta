@@ -88,3 +88,8 @@ class NoopScaffoldServices implements AuthService, OrganizationService, UserServ
     @Override
     public IdResponse createMissionRoom(RoomCreateRequest request) {
         return created();
+    }
+
+    @Override
+    public void inviteMember(MemberChangeRequest request) {
+    }
