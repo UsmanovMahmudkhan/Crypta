@@ -26,3 +26,6 @@ RUN chown -R sovereign:sovereign /app
 
 # Switch to the non-root user for security hardening
 USER sovereign
+
+# Expose the default Spring Boot port
+EXPOSE 8080
