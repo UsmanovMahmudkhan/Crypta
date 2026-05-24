@@ -68,3 +68,8 @@ Core components:
 - Flutter mobile clients with native security modules.
 - Spring Boot backend modular monolith initially, separable into services later.
 - PostgreSQL for durable identity, policy, key metadata, ciphertext envelopes, audit, and delivery receipts.
+- Redis for ephemeral fanout, queues, WebSocket presence hints, and rate limiting; never as a plaintext cache.
+- WebSocket over TLS 1.3 for realtime encrypted envelope delivery.
+- Object storage for encrypted attachment blobs only.
+- MDM connectors for device posture.
+- SIEM export pipeline for security/audit events.
