@@ -103,3 +103,8 @@ Required services:
 - `DeliveryService`: offline queue and delivery receipt orchestration.
 - `NotificationService`: generic push only.
 - `AttachmentService`: encrypted attachment object lifecycle.
+- `AuditService`: append-only metadata/admin/security audit.
+- `AdminGovernanceService`: admin approvals, dual control, signed actions.
+- `MDMIntegrationService`: MDM posture sync.
+- `SIEMExportService`: normalized event export.
+- `EmergencyLockdownService`: global/org/room/device lockdown controls.
