@@ -43,3 +43,8 @@ Primary attacker goals:
 
 - E2EE by default for direct and mission room messages.
 - No plaintext messages or attachments on backend.
+- No private, symmetric, MLS epoch, or group keys on backend.
+- Forward secrecy and post-compromise security.
+- PQ-aware direct key agreement using PQXDH where supported.
+- MLS for group messaging with membership-change key rotation.
+- Key transparency for public key replacement detection.
