@@ -368,3 +368,8 @@ All APIs require TLS 1.3, request IDs, device-bound sessions after login, rate l
 
 - Request: `roomId`, `policy`, `reason`.
 - Response: empty success.
+- Authentication: admin step-up.
+- Authorization: room policy admin; dual approval for high classification.
+- Security notes: creates new policy version and room event; may trigger MLS commit.
+- Failure cases: weaker-than-baseline policy, missing approval, active legal/lockdown conflict.
+
