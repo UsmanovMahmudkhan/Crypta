@@ -703,3 +703,8 @@ Dangerous mistakes:
 Phase 0: Threat model, architecture, library selection, security review plan.
 
 - Deliver threat model, data classification, crypto library shortlist, mobile native feasibility spike, audit plan.
+
+Phase 1: Authentication, organization, users, devices, WebAuthn, basic admin.
+
+- Implement org/user lifecycle, WebAuthn, device registration, attestation storage, admin audit.
+
