@@ -33,3 +33,8 @@ public final class CommonDtos {
     public record WebAuthnStartResponse(@NotBlank String challengeBase64, Map<String, Object> publicKeyCredentialOptions) {
     }
 
+    public record WebAuthnFinishRequest(@NotNull UUID userId, @NotBlank String credentialJson) {
+    }
+
+    public record PublicKeyUploadRequest(@NotNull UUID deviceId, @NotBlank String algorithm, @NotBlank String publicKeyBase64, @NotBlank String signatureBase64) {
+    }
