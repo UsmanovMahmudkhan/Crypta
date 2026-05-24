@@ -178,3 +178,8 @@ CREATE TABLE room_policies (
 CREATE TABLE encrypted_messages (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id uuid NOT NULL REFERENCES organizations(id),
+    room_id uuid REFERENCES rooms(id),
+    sender_user_id uuid NOT NULL REFERENCES users(id),
+    sender_device_id uuid NOT NULL REFERENCES devices(id),
+    recipient_user_id uuid REFERENCES users(id),
+    recipient_device_id uuid REFERENCES devices(id),
