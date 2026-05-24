@@ -1,4 +1,5 @@
-version: '3.8'
+# Local development only. Production deployments should use the Kubernetes
+# manifests under k8s/ with externally managed PostgreSQL and secrets.
 
 services:
   # ==============================================================================
@@ -8,9 +9,9 @@ services:
     image: postgres:16-alpine
     container_name: sovereign-db
     environment:
-      POSTGRES_DB: sovereign_comm
-      POSTGRES_USER: sovereign_comm
-      POSTGRES_PASSWORD: sovereign_comm
+      POSTGRES_DB: ${POSTGRES_DB:-sovereign_comm}
+      POSTGRES_USER: ${POSTGRES_USER:-sovereign_comm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sovereign_comm}
     ports:
       - "5433:5432"
     volumes:
@@ -34,14 +35,20 @@ services:
       - "8080:8080"
     environment:
       DATABASE_URL: jdbc:postgresql://db:5432/sovereign_comm
-      DATABASE_USERNAME: sovereign_comm
-      DATABASE_PASSWORD: sovereign_comm
-      WEBAUTHN_RP_ID: localhost
-      WEBAUTHN_RP_NAME: Sovereign Comm
-      WEBAUTHN_ALLOWED_ORIGINS: http://localhost:8080
+      DATABASE_USERNAME: ${POSTGRES_USER:-sovereign_comm}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-sovereign_comm}
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-localhost}
+      WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-Sovereign Comm}
+      WEBAUTHN_ALLOWED_ORIGINS: ${WEBAUTHN_ALLOWED_ORIGINS:-http://localhost:8080}
+      BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN:-local-bootstrap-token-change-me}
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
     restart: unless-stopped
 
 # ==============================================================================
