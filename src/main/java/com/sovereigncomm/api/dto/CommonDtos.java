@@ -43,3 +43,8 @@ public final class CommonDtos {
     }
 
     public record KeyBundleResponse(UUID userId, UUID deviceId, List<Map<String, Object>> identityKeys, List<Map<String, Object>> prekeys) {
+    }
+
+    public record RoomCreateRequest(@NotNull UUID organizationId, @NotBlank String name, @NotBlank String classification, Map<String, Object> policy) {
+    }
+
