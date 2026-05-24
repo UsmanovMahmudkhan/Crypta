@@ -28,3 +28,8 @@ public final class CommonDtos {
             @NotBlank String attestationFormat,
             @NotBlank String attestationObjectBase64,
             @NotBlank String deviceSigningPublicKeyBase64) {
+    }
+
+    public record WebAuthnStartResponse(@NotBlank String challengeBase64, Map<String, Object> publicKeyCredentialOptions) {
+    }
+
