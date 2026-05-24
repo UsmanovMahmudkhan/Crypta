@@ -233,3 +233,8 @@ CREATE TABLE audit_events (
 
 CREATE TABLE admin_actions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id uuid NOT NULL REFERENCES organizations(id),
+    admin_user_id uuid NOT NULL REFERENCES users(id),
+    action_type text NOT NULL,
+    signed_action_envelope jsonb NOT NULL,
+    approval_state text NOT NULL DEFAULT 'PENDING',
