@@ -193,3 +193,8 @@ Tables included:
 - `one_time_prekeys`
 - `pq_prekeys`
 - `key_transparency_entries`
+- `rooms`
+- `room_members`
+- `room_policies`
+- `encrypted_messages`
+- `encrypted_attachments`
