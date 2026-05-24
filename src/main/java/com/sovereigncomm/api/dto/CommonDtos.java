@@ -8,3 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+public final class CommonDtos {
+    private CommonDtos() {
+    }
+
+    public record IdResponse(UUID id, Instant createdAt) {
