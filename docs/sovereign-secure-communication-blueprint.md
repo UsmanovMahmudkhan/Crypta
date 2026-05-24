@@ -613,3 +613,8 @@ Export normalized events:
 Never export:
 
 - Plaintext message content.
+- Plaintext attachment content.
+- Private keys, content keys, group keys.
+- Full ciphertext unless explicitly configured for forensic retention.
+
+Sinks:
