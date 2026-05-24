@@ -583,3 +583,8 @@ Supported posture signals:
 - Device enrollment state.
 - OS version and patch level.
 - Screen lock and biometric policy.
+- Jailbreak/root risk signal.
+- App version minimum.
+- Hardware-backed key availability.
+- Remote wipe eligibility.
+
