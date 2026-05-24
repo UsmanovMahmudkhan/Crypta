@@ -513,3 +513,8 @@ All WebSocket connections are authenticated as a specific device. Payloads are e
 - Fields: `roomId`, `policyVersion`, `changedBy`, `effectiveAt`.
 - Response: ack and optional MLS commit status.
 - Authentication: server-to-device.
+- Authorization: room members.
+- Security notes: policy changes may require client-side state transition.
+- Failure cases: client policy cache stale.
+
+### `emergency_lockdown_started`
