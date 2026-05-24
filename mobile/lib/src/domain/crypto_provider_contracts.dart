@@ -33,3 +33,8 @@ abstract interface class GroupCryptoProvider {
   });
 }
 
+abstract interface class KeyTransparencyVerifier {
+  Future<bool> verifyInclusionProof({
+    required Uint8List canonicalEntry,
+    required Uint8List inclusionProof,
+    required Uint8List signedTreeHead,
