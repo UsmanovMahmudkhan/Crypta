@@ -40,6 +40,9 @@ public final class CommonDtos {
     public record WebAuthnFinishRequest(@NotNull UUID userId, @NotBlank String credentialJson) {
     }
 
+    public record BootstrapSessionRequest(@NotNull UUID userId, @NotNull UUID deviceId) {
+    }
+
     public record SessionResponse(UUID userId, UUID deviceId, String token, Instant expiresAt) {
     }
 
