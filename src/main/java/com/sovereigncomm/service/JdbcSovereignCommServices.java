@@ -342,6 +342,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
 
     @Override
     public List<EncryptedMessageResponse> inbox(MessageInboxRequest request) {
+        enforceInboxDevice(request.deviceId());
         int limit = request.limit() == null ? 50 : Math.min(request.limit(), 100);
         Instant after = request.after() == null ? Instant.EPOCH : request.after();
         return jdbc.query("""
@@ -364,6 +365,16 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                         """,
                 (rs, rowNum) -> messageResponse(rs),
                 Timestamp.from(after), request.deviceId(), request.deviceId(), limit);
+    }
+
+    private void enforceInboxDevice(UUID deviceId) {
+        AuthenticatedActor actor = requireActor();
+        if (actor.bootstrap()) {
+            throw new SecurityException("Bearer session is required to read inbox");
+        }
+        if (!deviceId.equals(actor.deviceId())) {
+            throw new SecurityException("Inbox device must match authenticated session");
+        }
     }
 
     @Override
