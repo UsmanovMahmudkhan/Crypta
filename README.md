@@ -1,6 +1,8 @@
-# Sovereign Communication Platform
+# Crypta
 
-Sovereign Communication Platform is a zero-trust, end-to-end encrypted communication system scaffold designed for high-risk corporate and executive environments. It provides secure direct and group messaging pipelines by ensuring that only ciphertext envelopes are ingested, transmitted, or persisted on the server side. The platform is built for organizations requiring absolute data privacy, preventing plaintext leakage even in the event of database or administrator credential compromise.
+Crypta is a zero-trust, end-to-end encrypted communication platform scaffold designed for high-risk corporate, executive, and security-sensitive environments. It is an alpha-stage, security-focused scaffold, not production-ready secure messaging software and not independently audited.
+
+The backend is intended to ingest, route, and persist ciphertext envelopes, public key material, policy records, encrypted attachment metadata, and audit events while keeping plaintext and private keys on client devices. Some code and package names still use `Sovereign Comm`.
 
 ## Local Backend Run
 
@@ -17,6 +19,17 @@ mvn spring-boot:run
 ```
 
 Provision organizations, users, and devices with `X-Bootstrap-Token`, then exchange a bootstrapped `userId` and `deviceId` at `POST /api/v1/bootstrap/sessions` for a bearer token. WebAuthn challenge creation is available, but credential finish endpoints fail closed until real passkey verification is configured.
+
+## Documentation
+
+- [Architecture](ARCHITECTURE.md)
+- [Threat Model](THREAT_MODEL.md)
+- [API Overview](API.md)
+- [Deployment](DEPLOYMENT.md)
+- [Security Policy](SECURITY.md)
+- [Roadmap](ROADMAP.md)
+- [Contributing](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
 
 Verified reference anchors checked on 2026-05-24:
 * [IETF RFC 9420: Messaging Layer Security](https://www.ietf.org/rfc/rfc9420)
@@ -63,8 +76,8 @@ flowchart TD
 
     subgraph Infrastructure ["Infrastructure Services"]
         Services --> DB[("Database (PostgreSQL 16)")]
-        Services --> SIEM["SIEM Export Sinks (Splunk, Elastic, Sentinel)"]
-        Services --> MDM["MDM Providers (JAMF, Microsoft Intune)"]
+        Services --> SIEM["SIEM Export Sink Records (connector TODO)"]
+        Services --> MDM["MDM Provider Boundary (connector TODO)"]
     end
 ```
 
@@ -74,7 +87,7 @@ flowchart TD
 
 ### User Authentication & Sessions
 
-The project includes secure WebAuthn/Passkey registration and login flows, challenge-replay protection, and random bearer tokens stored as SHA-256 hashes.
+The project includes WebAuthn/passkey challenge scaffolding, bootstrap session issuance, and random bearer tokens stored as SHA-256 hashes. WebAuthn credential finish verification is not yet configured.
 
 Implemented with:
 
@@ -180,7 +193,7 @@ Implemented with:
 
 ### Containerized Deployment
 
-The project contains production-ready deployment specifications for containerized orchestrators.
+The project contains local Docker Compose support and Kubernetes base manifests for deployment experimentation. These files require environment-specific hardening before production use.
 
 Implemented with:
 

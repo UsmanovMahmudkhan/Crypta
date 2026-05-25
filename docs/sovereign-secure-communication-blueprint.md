@@ -50,7 +50,7 @@ Primary attacker goals:
 - Key transparency for public key replacement detection.
 - Verified devices only for sensitive rooms.
 - Hardware-backed key protection on iOS and Android.
-- Minimal metadata, generic push notifications, immutable audit trails.
+- Minimal metadata, generic push notifications, and tamper-evident audit records.
 - Zero-trust authorization, least privilege, secure defaults, defense in depth.
 
 ## 4. Non-Goals

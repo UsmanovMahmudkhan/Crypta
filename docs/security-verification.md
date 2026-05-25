@@ -1,6 +1,6 @@
 # Security Verification Notes
 
-This repository now enforces production-shaped controls around persistence, sessions, audit chaining, ciphertext-only storage, bootstrap access, and Kubernetes deployment. It is not yet externally cryptography-audited.
+This repository contains alpha-stage controls around persistence, sessions, audit chaining, ciphertext-only storage, bootstrap access, and Kubernetes deployment scaffolding. It is not yet externally cryptography-audited.
 
 ## Implemented Controls
 
