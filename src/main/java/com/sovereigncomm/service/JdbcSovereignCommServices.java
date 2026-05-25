@@ -295,6 +295,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public IdResponse submit(EncryptedMessageSubmitRequest request) {
+        enforceMessageSender(request);
         assertNoPlaintext(request.cryptoMetadata());
         if (!Set.of("DIRECT", "MLS_GROUP").contains(request.messageKind())) {
             throw new IllegalArgumentException("messageKind must be DIRECT or MLS_GROUP");
@@ -326,6 +327,17 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         appendSecurityEvent(request.organizationId(), request.senderUserId(), request.senderDeviceId(),
                 "CIPHERTEXT_ACCEPTED", Map.of("messageId", response.id().toString(), "messageKind", request.messageKind()));
         return response;
+    }
+
+    private void enforceMessageSender(EncryptedMessageSubmitRequest request) {
+        AuthenticatedActor actor = requireActor();
+        if (actor.bootstrap()) {
+            throw new SecurityException("Bearer session is required to submit messages");
+        }
+        requireOrgAccess(actor, request.organizationId());
+        if (!request.senderUserId().equals(actor.userId()) || !request.senderDeviceId().equals(actor.deviceId())) {
+            throw new SecurityException("Sender must match authenticated session");
+        }
     }
 
     @Override
