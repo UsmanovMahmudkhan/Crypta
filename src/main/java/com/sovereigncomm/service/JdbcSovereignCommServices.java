@@ -64,6 +64,19 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
 
     @Override
     @Transactional
+    public SessionResponse issueBootstrapSession(BootstrapSessionRequest request) {
+        AuthenticatedActor actor = requireActor();
+        if (!actor.bootstrap()) {
+            throw new SecurityException("Bootstrap token is required to issue bootstrap sessions");
+        }
+        if (!request.userId().equals(userForDevice(request.deviceId()))) {
+            throw new SecurityException("Device does not belong to requested user");
+        }
+        return issueSession(request.userId(), request.deviceId());
+    }
+
+    @Override
+    @Transactional
     public SessionResponse finishWebAuthnRegistration(WebAuthnFinishRequest request) {
         consumeChallenge(request.userId(), "REGISTRATION");
         byte[] credentialHash = tokenService.sha256(request.credentialJson());
@@ -627,9 +640,12 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     }
 
     private SessionResponse issueSession(UUID userId) {
+        return issueSession(userId, latestDeviceForUser(userId));
+    }
+
+    private SessionResponse issueSession(UUID userId, UUID deviceId) {
         String token = tokenService.newToken();
         Instant expiresAt = Instant.now().plus(12, ChronoUnit.HOURS);
-        UUID deviceId = latestDeviceForUser(userId);
         jdbc.update("""
                         INSERT INTO api_sessions(user_id, device_id, token_hash, expires_at)
                         VALUES (?, ?, ?, ?)
