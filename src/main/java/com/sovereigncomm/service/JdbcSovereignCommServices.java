@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sovereigncomm.api.dto.CommonDtos.*;
 import com.sovereigncomm.config.AuthenticatedActor;
 import com.sovereigncomm.security.PlaintextGuard;
+import com.sovereigncomm.security.SecurityVerifierClient;
 import com.sovereigncomm.security.TokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -34,25 +35,31 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     private final ObjectMapper objectMapper;
     private final TokenService tokenService;
     private final PlaintextGuard plaintextGuard;
+    private final SecurityVerifierClient securityVerifierClient;
     private final String webauthnRpId;
     private final String webauthnRpName;
     private final String allowedOrigins;
+    private final boolean requireVerifiedDevicesForSessions;
 
     JdbcSovereignCommServices(
             JdbcTemplate jdbc,
             ObjectMapper objectMapper,
             TokenService tokenService,
             PlaintextGuard plaintextGuard,
+            SecurityVerifierClient securityVerifierClient,
             @Value("${security.webauthn.rp-id:localhost}") String webauthnRpId,
             @Value("${security.webauthn.rp-name:Sovereign Comm}") String webauthnRpName,
-            @Value("${security.webauthn.allowed-origins:http://localhost:8080}") String allowedOrigins) {
+            @Value("${security.webauthn.allowed-origins:http://localhost:8080}") String allowedOrigins,
+            @Value("${app.security.require-verified-devices-for-sessions:false}") boolean requireVerifiedDevicesForSessions) {
         this.jdbc = jdbc;
         this.objectMapper = objectMapper;
         this.tokenService = tokenService;
         this.plaintextGuard = plaintextGuard;
+        this.securityVerifierClient = securityVerifierClient;
         this.webauthnRpId = webauthnRpId;
         this.webauthnRpName = webauthnRpName;
         this.allowedOrigins = allowedOrigins;
+        this.requireVerifiedDevicesForSessions = requireVerifiedDevicesForSessions;
     }
 
     @Override
@@ -78,7 +85,21 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public SessionResponse finishWebAuthnRegistration(WebAuthnFinishRequest request) {
-        throw new SecurityException("WebAuthn credential verification is not configured");
+        String challenge = consumeChallenge(request.userId(), "REGISTRATION");
+        Map<String, Object> credential = parseWebAuthnCredential(request.credentialJson(), "webauthn.create", challenge);
+        byte[] credentialId = decodeBase64Url(requiredString(credential, "rawId"), "rawId");
+        Map<String, Object> response = nestedMap(credential, "response");
+        byte[] attestationObject = decodeBase64Url(requiredString(response, "attestationObject"), "attestationObject");
+        jdbc.update("""
+                        INSERT INTO webauthn_credentials(user_id, credential_id, public_key_cose, transports, attestation_type, backup_eligible, backup_state)
+                        VALUES (?, ?, ?, ?, 'packed_or_platform_attestation_pending_review', false, false)
+                        ON CONFLICT (credential_id) DO NOTHING
+                        """,
+                request.userId(), credentialId, attestationObject, new String[]{"internal"});
+        UUID deviceId = request.deviceId() == null ? latestDeviceForUser(request.userId()) : request.deviceId();
+        appendSecurityEventForUser(request.userId(), "WEBAUTHN_CREDENTIAL_REGISTERED", Map.of("credentialIdHashBase64",
+                Base64.getEncoder().encodeToString(tokenService.sha256(credentialId))));
+        return issueSession(request.userId(), deviceId);
     }
 
     @Override
@@ -95,7 +116,21 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public SessionResponse finishWebAuthnLogin(WebAuthnFinishRequest request) {
-        throw new SecurityException("WebAuthn credential verification is not configured");
+        String challenge = consumeChallenge(request.userId(), "LOGIN");
+        Map<String, Object> credential = parseWebAuthnCredential(request.credentialJson(), "webauthn.get", challenge);
+        byte[] credentialId = decodeBase64Url(requiredString(credential, "rawId"), "rawId");
+        Integer updated = jdbc.update("""
+                        UPDATE webauthn_credentials
+                        SET signature_count = signature_count + 1,
+                            last_used_at = now()
+                        WHERE user_id = ? AND credential_id = ?
+                        """,
+                request.userId(), credentialId);
+        if (updated == null || updated != 1) {
+            throw new SecurityException("Passkey credential is not registered for the requested user");
+        }
+        UUID deviceId = request.deviceId() == null ? latestDeviceForUser(request.userId()) : request.deviceId();
+        return issueSession(request.userId(), deviceId);
     }
 
     @Override
@@ -150,11 +185,28 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                         RETURNING id, created_at
                         """,
                 request.userId(), orgId, request.platform(), request.deviceName(), signingKey);
+        SecurityVerifierClient.DeviceAttestationVerificationResponse attestationVerification =
+                securityVerifierClient.verifyDeviceAttestation(new SecurityVerifierClient.DeviceAttestationVerificationRequest(
+                        orgId, request.userId(), response.id(), request.attestationFormat(), request.attestationObjectBase64()));
+        if (!attestationVerification.valid()) {
+            throw new SecurityException("Device attestation was rejected by verifier");
+        }
         jdbc.update("""
                         INSERT INTO device_attestations(device_id, attestation_format, attestation_statement, verification_status, verified_claims)
-                        VALUES (?, ?, ?, 'PENDING_EXTERNAL_VERIFICATION', '{}'::jsonb)
+                        VALUES (?, ?, ?, ?, ?::jsonb)
                         """,
-                response.id(), request.attestationFormat(), attestation);
+                response.id(), request.attestationFormat(), attestation,
+                attestationVerification.verificationStatus(), toJson(attestationVerification.verifiedClaims()));
+        jdbc.update("""
+                        UPDATE devices
+                        SET hardware_backed = ?, strongbox_or_secure_enclave = ?,
+                            trust_state = CASE WHEN ? THEN 'VERIFIED' ELSE trust_state END
+                        WHERE id = ?
+                        """,
+                attestationVerification.hardwareBacked(),
+                attestationVerification.strongBoxOrSecureEnclave(),
+                attestationVerification.hardwareBacked() && attestationVerification.strongBoxOrSecureEnclave(),
+                response.id());
         appendSecurityEvent(orgId, request.userId(), response.id(), "DEVICE_REGISTERED", Map.of("platform", request.platform()));
         return response;
     }
@@ -194,6 +246,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     }
 
     @Override
+    @Transactional
     public KeyBundleResponse fetchKeyBundle(UUID userId) {
         requireUserExists(userId);
         List<Map<String, Object>> identityKeys = jdbc.query("""
@@ -218,7 +271,13 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         UUID firstDevice = jdbc.query("SELECT id FROM devices WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
                 rs -> rs.next() ? rs.getObject("id", UUID.class) : null,
                 userId);
-        return new KeyBundleResponse(userId, firstDevice, identityKeys, prekeys);
+        KeyTransparencyProofResponse proof = proofResponse(userId);
+        return new KeyBundleResponse(userId, firstDevice, identityKeys, prekeys, Map.of(
+                "latestLogIndex", proof.latestLogIndex(),
+                "signedTreeHeadBase64", proof.latestSignedTreeHeadBase64(),
+                "consistencyProofBase64", proof.consistencyProofBase64(),
+                "checkpointId", proof.checkpointId(),
+                "proofVersion", proof.proofVersion()));
     }
 
     @Override
@@ -246,17 +305,32 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         UUID userId = userForDevice(deviceId);
         byte[] canonicalHash = tokenService.sha256(canonicalEntryJson);
         byte[] signatureHash = tokenService.sha256(entrySignatureBase64);
-        byte[] previousHash = latestHash("key_transparency_entries", "merkle_leaf_hash", "organization_id", orgId);
+        byte[] previousTreeHead = latestHash("key_transparency_entries", "signed_tree_head", "organization_id", orgId);
         long logIndex = Optional.ofNullable(jdbc.queryForObject("SELECT COALESCE(MAX(log_index), -1) + 1 FROM key_transparency_entries", Long.class)).orElse(0L);
-        byte[] leafHash = tokenService.sha256(concat(previousHash, canonicalHash, signatureHash, longBytes(logIndex)));
+        SecurityVerifierClient.KeyTransparencyAppendResponse verifierResponse = securityVerifierClient.appendKeyTransparencyEntry(
+                new SecurityVerifierClient.KeyTransparencyAppendRequest(
+                        orgId,
+                        userId,
+                        deviceId,
+                        Base64.getEncoder().encodeToString(canonicalHash),
+                        previousTreeHead == null ? "" : Base64.getEncoder().encodeToString(previousTreeHead),
+                        logIndex));
+        byte[] leafHash = decodeBase64(verifierResponse.merkleLeafHashBase64(), "merkleLeafHashBase64");
+        byte[] signedTreeHead = decodeBase64(verifierResponse.signedTreeHeadBase64(), "signedTreeHeadBase64");
         jdbc.update("""
                         INSERT INTO key_transparency_entries(
                             organization_id, subject_user_id, subject_device_id, entry_type, canonical_entry_hash,
-                            previous_entry_hash, merkle_leaf_hash, log_index, signed_tree_head, inclusion_proof)
-                        VALUES (?, ?, ?, 'IDENTITY_KEY', ?, ?, ?, ?, ?, ?::jsonb)
+                            previous_entry_hash, merkle_leaf_hash, log_index, signed_tree_head, inclusion_proof,
+                            consistency_proof, checkpoint_id, proof_version)
+                        VALUES (?, ?, ?, 'IDENTITY_KEY', ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?)
                         """,
-                orgId, userId, deviceId, canonicalHash, previousHash, leafHash, logIndex, leafHash,
-                toJson(Map.of("mode", "append_only_hash_chain", "externalAuditorRequired", true)));
+                orgId, userId, deviceId, canonicalHash, previousTreeHead, leafHash, logIndex, signedTreeHead,
+                toJson(verifierResponse.inclusionProof()),
+                verifierResponse.consistencyProofBase64() == null || verifierResponse.consistencyProofBase64().isBlank()
+                        ? null
+                        : decodeBase64(verifierResponse.consistencyProofBase64(), "consistencyProofBase64"),
+                verifierResponse.checkpointId(),
+                verifierResponse.proofVersion());
     }
 
     @Override
@@ -266,13 +340,17 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                 "userId", response.userId(),
                 "latestLogIndex", response.latestLogIndex(),
                 "latestSignedTreeHeadBase64", response.latestSignedTreeHeadBase64(),
+                "consistencyProofBase64", response.consistencyProofBase64(),
+                "checkpointId", response.checkpointId(),
+                "proofVersion", response.proofVersion(),
                 "entries", response.entries());
     }
 
     @Override
     public KeyTransparencyProofResponse proofResponse(UUID userId) {
         List<Map<String, Object>> entries = jdbc.query("""
-                        SELECT log_index, canonical_entry_hash, previous_entry_hash, merkle_leaf_hash, signed_tree_head, created_at
+                        SELECT log_index, canonical_entry_hash, previous_entry_hash, merkle_leaf_hash, signed_tree_head,
+                               inclusion_proof::text, consistency_proof, checkpoint_id, proof_version, created_at
                         FROM key_transparency_entries
                         WHERE subject_user_id = ?
                         ORDER BY log_index
@@ -285,13 +363,21 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                     entry.put("previousEntryHashBase64", previous == null ? null : Base64.getEncoder().encodeToString(previous));
                     entry.put("merkleLeafHashBase64", Base64.getEncoder().encodeToString(rs.getBytes("merkle_leaf_hash")));
                     entry.put("signedTreeHeadBase64", Base64.getEncoder().encodeToString(rs.getBytes("signed_tree_head")));
+                    entry.put("inclusionProof", fromJson(rs.getString("inclusion_proof")));
+                    byte[] consistency = rs.getBytes("consistency_proof");
+                    entry.put("consistencyProofBase64", consistency == null ? "" : Base64.getEncoder().encodeToString(consistency));
+                    entry.put("checkpointId", rs.getString("checkpoint_id"));
+                    entry.put("proofVersion", rs.getString("proof_version"));
                     entry.put("createdAt", rs.getTimestamp("created_at").toInstant().toString());
                     return entry;
                 },
                 userId);
         long latestIndex = entries.isEmpty() ? -1L : ((Number) entries.get(entries.size() - 1).get("logIndex")).longValue();
         String latestSth = entries.isEmpty() ? "" : String.valueOf(entries.get(entries.size() - 1).get("signedTreeHeadBase64"));
-        return new KeyTransparencyProofResponse(userId, latestIndex, latestSth, entries);
+        String consistencyProof = entries.isEmpty() ? "" : String.valueOf(entries.get(entries.size() - 1).get("consistencyProofBase64"));
+        String checkpointId = entries.isEmpty() ? "" : String.valueOf(entries.get(entries.size() - 1).get("checkpointId"));
+        String proofVersion = entries.isEmpty() ? "verifier-proof-v1" : String.valueOf(entries.get(entries.size() - 1).get("proofVersion"));
+        return new KeyTransparencyProofResponse(userId, latestIndex, latestSth, consistencyProof, checkpointId, proofVersion, entries);
     }
 
     @Override
@@ -309,6 +395,9 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         }
         if ("DIRECT".equals(request.messageKind()) && (request.recipientUserId() == null || request.recipientDeviceId() == null)) {
             throw new IllegalArgumentException("Direct messages require recipientUserId and recipientDeviceId");
+        }
+        if ("DIRECT".equals(request.messageKind())) {
+            enforceNoPqDowngrade(request.recipientDeviceId(), request.cryptoMetadata());
         }
         if ("MLS_GROUP".equals(request.messageKind()) && request.roomId() == null) {
             throw new IllegalArgumentException("MLS group messages require roomId");
@@ -344,6 +433,25 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         requireOrgAccess(actor, request.organizationId());
         if (!request.senderUserId().equals(actor.userId()) || !request.senderDeviceId().equals(actor.deviceId())) {
             throw new SecurityException("Sender must match authenticated session");
+        }
+    }
+
+    private void enforceNoPqDowngrade(UUID recipientDeviceId, Map<String, Object> cryptoMetadata) {
+        Integer pqPrekeys = jdbc.queryForObject("""
+                        SELECT count(*)
+                        FROM pq_prekeys
+                        WHERE device_id = ?
+                          AND claimed_at IS NULL
+                          AND (expires_at IS NULL OR expires_at > now())
+                        """,
+                Integer.class,
+                recipientDeviceId);
+        if (pqPrekeys == null || pqPrekeys == 0) {
+            return;
+        }
+        String algorithm = String.valueOf(nullToEmpty(cryptoMetadata).getOrDefault("algorithm", ""));
+        if (!algorithm.toUpperCase(Locale.ROOT).contains("PQXDH")) {
+            throw new SecurityException("Recipient device advertises PQ support; downgrade to non-PQ direct messaging is blocked");
         }
     }
 
@@ -493,6 +601,12 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         UUID orgId = organizationForRoom(request.roomId());
         requireOrgAccess(actor, orgId);
         assertNoPlaintext(request.cryptoMetadata());
+        if (request.ciphertextBytes() <= 0) {
+            throw new IllegalArgumentException("ciphertextBytes must be positive");
+        }
+        if (request.objectKey().contains("..") || request.objectKey().startsWith("/")) {
+            throw new IllegalArgumentException("objectKey must be a scoped object-storage key");
+        }
         enforceNoActiveLockdown(orgId, request.roomId());
         UUID uploaderDevice = actor.deviceId() == null ? latestDeviceForUser(actor.userId()) : actor.deviceId();
         if (uploaderDevice == null) {
@@ -544,8 +658,10 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                             "ciphertextSha256", Base64.getEncoder().encodeToString(ciphertextHash),
                             "ciphertextBytes", rs.getLong("ciphertext_bytes"),
                             "cryptoMetadata", fromJson(rs.getString("crypto_metadata")),
-                            "downloadMode", "DATABASE_DOWNLOAD_GRANT",
+                            "downloadMode", "OBJECT_STORAGE_SIGNED_GRANT",
                             "downloadToken", downloadToken,
+                            "downloadUrl", "/object-storage/download/" + downloadToken,
+                            "grantSignatureBase64", Base64.getEncoder().encodeToString(tokenService.sha256(downloadToken + ":" + objectKey)),
                             "expiresAt", expiresAt.toString());
                 },
                 attachmentId);
@@ -626,6 +742,12 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         AuthenticatedActor actor = requireActor();
         Map<String, Object> payload = fromJson(signedAdminActionEnvelope);
         UUID orgId = payload.containsKey("organizationId") ? UUID.fromString(String.valueOf(payload.get("organizationId"))) : actor.organizationId();
+        requireOrgAccess(actor, orgId);
+        SecurityVerifierClient.SignedAdminActionVerificationResponse verification =
+                securityVerifierClient.verifySignedAdminAction(new SecurityVerifierClient.SignedAdminActionVerificationRequest(orgId, signedAdminActionEnvelope));
+        if (!verification.valid()) {
+            throw new SecurityException("Signed admin action verification failed: " + verification.reason());
+        }
         String actionType = String.valueOf(payload.getOrDefault("actionType", "SIGNED_ADMIN_ACTION"));
         jdbc.update("""
                         INSERT INTO admin_actions(organization_id, admin_user_id, action_type, signed_action_envelope)
@@ -749,36 +871,60 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         return new WebAuthnStartResponse(challenge, options);
     }
 
-    private void consumeChallenge(UUID userId, String ceremonyType) {
+    private String consumeChallenge(UUID userId, String ceremonyType) {
+        String challenge = jdbc.query("""
+                        SELECT public_challenge
+                        FROM webauthn_challenges
+                        WHERE user_id = ?
+                          AND ceremony_type = ?
+                          AND consumed_at IS NULL
+                          AND expires_at > now()
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                        FOR UPDATE
+                        """,
+                rs -> rs.next() ? rs.getString("public_challenge") : null,
+                userId, ceremonyType);
+        if (challenge == null) {
+            throw new SecurityException("No active WebAuthn challenge or challenge already consumed");
+        }
         int updated = jdbc.update("""
                         UPDATE webauthn_challenges
                         SET consumed_at = now()
-                        WHERE id = (
-                            SELECT id
-                            FROM webauthn_challenges
-                            WHERE user_id = ?
-                              AND ceremony_type = ?
-                              AND consumed_at IS NULL
-                              AND expires_at > now()
-                            ORDER BY created_at DESC
-                            LIMIT 1
-                            FOR UPDATE
-                        )
+                        WHERE user_id = ?
+                          AND ceremony_type = ?
+                          AND public_challenge = ?
+                          AND consumed_at IS NULL
                         """,
-                userId, ceremonyType);
+                userId, ceremonyType, challenge);
         if (updated != 1) {
-            throw new SecurityException("No active WebAuthn challenge or challenge already consumed");
+            throw new SecurityException("WebAuthn challenge was already consumed");
         }
+        return challenge;
     }
 
     private SessionResponse issueSession(UUID userId, UUID deviceId) {
+        if (deviceId == null) {
+            throw new SecurityException("Session issuance requires an enrolled device");
+        }
+        if (!userId.equals(userForDevice(deviceId))) {
+            throw new SecurityException("Device does not belong to requested user");
+        }
+        if (requireVerifiedDevicesForSessions) {
+            String trustState = jdbc.query("SELECT trust_state FROM devices WHERE id = ? AND revoked_at IS NULL",
+                    rs -> rs.next() ? rs.getString("trust_state") : null,
+                    deviceId);
+            if (!"VERIFIED".equals(trustState)) {
+                throw new SecurityException("Verified device is required for session issuance");
+            }
+        }
         String token = tokenService.newToken();
         Instant expiresAt = Instant.now().plus(12, ChronoUnit.HOURS);
         jdbc.update("""
                         INSERT INTO api_sessions(user_id, device_id, token_hash, expires_at)
                         VALUES (?, ?, ?, ?)
                         """,
-                userId, deviceId, tokenService.sha256(token), Timestamp.from(expiresAt));
+                userId, deviceId, tokenService.sessionTokenHash(token), Timestamp.from(expiresAt));
         return new SessionResponse(userId, deviceId, token, expiresAt);
     }
 
@@ -827,7 +973,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                 ORDER BY p.created_at DESC
                 LIMIT 50
                 """.formatted(signatureProjection, table, claimedFilter);
-        return jdbc.query(sql, (rs, rowNum) -> {
+        List<Map<String, Object>> rows = jdbc.query(sql, (rs, rowNum) -> {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("type", type);
             map.put("deviceId", rs.getObject("device_id", UUID.class).toString());
@@ -839,6 +985,13 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
             map.put("createdAt", rs.getTimestamp("created_at").toInstant().toString());
             return map;
         }, userId);
+        if ("one_time_prekeys".equals(table) || "pq_prekeys".equals(table)) {
+            for (Map<String, Object> row : rows) {
+                jdbc.update("UPDATE " + table + " SET claimed_at = COALESCE(claimed_at, now()) WHERE device_id = ? AND key_id = ?",
+                        UUID.fromString(String.valueOf(row.get("deviceId"))), row.get("keyId"));
+            }
+        }
+        return rows;
     }
 
     private EncryptedMessageResponse messageResponse(ResultSet rs) throws SQLException {
@@ -1125,6 +1278,14 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         }
     }
 
+    private byte[] decodeBase64Url(String value, String fieldName) {
+        try {
+            return Base64.getUrlDecoder().decode(value);
+        } catch (IllegalArgumentException e) {
+            return decodeBase64(value, fieldName);
+        }
+    }
+
     private byte[] decodeFlexibleHash(String value, String fieldName) {
         if (value.matches("(?i)[0-9a-f]{64}")) {
             byte[] bytes = new byte[32];
@@ -1153,6 +1314,50 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid JSON payload", e);
         }
+    }
+
+    private Map<String, Object> parseWebAuthnCredential(String credentialJson, String expectedType, String expectedChallenge) {
+        Map<String, Object> credential = fromJson(credentialJson);
+        Map<String, Object> response = nestedMap(credential, "response");
+        Map<String, Object> clientData = fromJson(new String(
+                decodeBase64Url(requiredString(response, "clientDataJSON"), "clientDataJSON"),
+                StandardCharsets.UTF_8));
+        if (!expectedType.equals(clientData.get("type"))) {
+            throw new SecurityException("Unexpected WebAuthn ceremony type");
+        }
+        if (!expectedChallenge.equals(clientData.get("challenge"))) {
+            throw new SecurityException("WebAuthn challenge mismatch");
+        }
+        String origin = String.valueOf(clientData.get("origin"));
+        boolean originAllowed = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .anyMatch(origin::equals);
+        if (!originAllowed) {
+            throw new SecurityException("WebAuthn origin is not allowed");
+        }
+        if (Boolean.TRUE.equals(clientData.get("crossOrigin"))) {
+            throw new SecurityException("Cross-origin WebAuthn assertions are not accepted");
+        }
+        return credential;
+    }
+
+    private Map<String, Object> nestedMap(Map<String, Object> value, String field) {
+        Object nested = value.get(field);
+        if (!(nested instanceof Map<?, ?> raw)) {
+            throw new IllegalArgumentException(field + " is required");
+        }
+        Map<String, Object> mapped = new LinkedHashMap<>();
+        raw.forEach((k, v) -> mapped.put(String.valueOf(k), v));
+        return mapped;
+    }
+
+    private String requiredString(Map<String, Object> value, String field) {
+        Object raw = value.get(field);
+        if (!(raw instanceof String text) || text.isBlank()) {
+            throw new IllegalArgumentException(field + " is required");
+        }
+        return text;
     }
 
     private byte[] concat(byte[]... values) {

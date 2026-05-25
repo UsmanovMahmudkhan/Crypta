@@ -1,6 +1,7 @@
 package com.sovereigncomm.config;
 
 import com.sovereigncomm.security.ApiAuthenticationFilter;
+import com.sovereigncomm.security.RateLimitingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -12,7 +13,8 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 @Configuration
 public class SecurityConfig {
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, ApiAuthenticationFilter apiAuthenticationFilter) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, ApiAuthenticationFilter apiAuthenticationFilter,
+                                            RateLimitingFilter rateLimitingFilter) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -26,6 +28,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/organizations", "/api/v1/users").hasAnyRole("PLATFORM_OPERATOR", "ORG_ADMIN")
                         .requestMatchers("/api/v1/admin/**", "/api/v1/governance/**").hasAnyRole("PLATFORM_OPERATOR", "ORG_ADMIN")
                         .anyRequest().authenticated())
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(apiAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

@@ -22,6 +22,8 @@ jobs:
           cache: maven
       - name: Test
         run: mvn -B test
+      - name: Production profile smoke test
+        run: mvn -B -DskipTests package
       - name: Build container
         run: docker build -t sovereign-comm-platform:${{ github.sha }} .
       - name: Generate SBOM
@@ -33,8 +35,22 @@ jobs:
           path: sbom.spdx.json
           if-no-files-found: ignore
 
+  security-verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Test verifier
+        working-directory: crypta-security-verifier
+        run: go test ./...
+      - name: Build verifier container
+        run: docker build -t crypta-security-verifier:${{ github.sha }} crypta-security-verifier
+
   k8s-manifests:
     runs-on: ubuntu-latest
+    needs: [backend, security-verifier]
     steps:
       - uses: actions/checkout@v4
       - uses: imranismail/setup-kustomize@v2

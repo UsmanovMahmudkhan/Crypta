@@ -30,6 +30,7 @@ flowchart LR
 - `api`: REST controllers for organizations, users, devices, WebAuthn, bootstrap sessions, keys, messages, attachments, rooms, admin actions, and governance.
 - `service`: Service interfaces and JDBC-backed implementation for core behavior.
 - `security`: Bearer-token authentication, bootstrap-token authentication, token hashing, and plaintext metadata guard.
+- `crypta-security-verifier`: Go sidecar for security verification jobs such as device attestation shape checks, key-transparency checkpoints, audit-chain checkpoint validation, and signed admin action envelope checks.
 - `config`: Spring Security, request ID handling, and authenticated actor model.
 - `crypto`: Provider contracts for direct crypto, group crypto, key transparency verification, device attestation, and secure storage.
 - `cql`: ANTLR-based compliance query parsing and execution.
@@ -104,7 +105,7 @@ These records are architectural support for Signal-style and PQXDH-style flows. 
 
 ## Key Transparency
 
-Identity key uploads append key transparency entries with canonical entry hashes, previous-entry hashes, Merkle-leaf-style hashes, log indexes, and signed tree head fields. This is a foundation for detecting public key replacement, but it still requires external consistency monitoring, client verification, and cryptographic review.
+Identity key uploads append key transparency entries with canonical entry hashes, Merkle-leaf-style hashes, log indexes, signed tree heads, inclusion proof metadata, consistency proof metadata, checkpoint IDs, and proof versions. In production this path is intended to call the Go verifier service; local development can use a deterministic fallback so the backend remains runnable.
 
 ## Audit Logging
 
@@ -122,14 +123,14 @@ Clients are expected to encrypt attachments locally. The backend records encrypt
 - Ciphertext byte length.
 - Crypto metadata.
 
-Download responses currently return metadata and `OBJECT_STORAGE_SIGNING_REQUIRED`, indicating that production object storage signing is not yet implemented.
+Download responses return metadata-only signed grants with object key, ciphertext hash, ciphertext size, grant token, grant signature, and expiry. A real cloud object-store adapter still needs to replace the placeholder URL with provider-specific pre-signed URLs.
 
 ## Policy/Governance Layer
 
 The governance layer includes:
 
 - CQL parsing and execution against approved governance data.
-- Smalltalk-style rule evaluation for policy experiments.
+- Smalltalk-style rule evaluation for policy experiments, disabled by default unless explicitly enabled for a runtime profile.
 - Room policy versioning.
 - Admin action recording.
 - Emergency lockdown records.

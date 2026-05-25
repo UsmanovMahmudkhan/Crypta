@@ -20,10 +20,12 @@ The repository contains a Spring Boot backend scaffold, PostgreSQL migrations, a
 - Flutter mobile structure with provider interfaces for crypto and native security boundaries.
 - Docker Compose local environment and Kubernetes base manifests.
 - CQL parser and Smalltalk governance rule evaluation prototypes.
+- Go `crypta-security-verifier` sidecar scaffold for device attestation checks, key-transparency checkpoints, audit-chain checkpoint validation, and signed admin action checks.
+- Session-token peppering support, route-level rate limiting, production readiness health checks, and stricter production defaults.
 
 ## Short-Term Goals
 
-- Replace WebAuthn finish placeholders with complete passkey verification.
+- Complete audited WebAuthn signature verification using persisted Yubico ceremony options and authenticator data validation.
 - Add endpoint-level integration tests for every controller.
 - Tighten authorization checks for room membership, device trust, admin actions, and governance routes.
 - Expand plaintext rejection tests for messages, attachments, policy metadata, logs, and error handling.
@@ -37,7 +39,7 @@ The repository contains a Spring Boot backend scaffold, PostgreSQL migrations, a
 - Integrate audited libraries or reviewed bindings for direct-message cryptography.
 - Implement real encrypted group messaging verification around MLS-style group state.
 - Add object storage signing for encrypted attachment upload and download.
-- Add rate limiting, abuse controls, and operational monitoring.
+- Expand rate limiting, abuse controls, and operational monitoring beyond the in-process first pass.
 - Add structured audit export adapters with redaction and backpressure behavior.
 - Validate Kubernetes NetworkPolicy, ingress, TLS, resource limits, and secret injection in a real cluster.
 
@@ -64,7 +66,7 @@ The repository contains a Spring Boot backend scaffold, PostgreSQL migrations, a
 - Formal threat model validation.
 - Secure deployment hardening for a specific cloud or Kubernetes environment.
 - Complete metadata minimization strategy.
-- Verified key transparency consistency proofs with external monitoring.
+- Verified key transparency consistency proofs with independent external monitoring.
 
 ## Production Readiness Requirements
 

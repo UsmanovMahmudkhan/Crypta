@@ -7,3 +7,7 @@ data:
   WEBAUTHN_RP_ID: secure.example.com
   WEBAUTHN_RP_NAME: Sovereign Comm
   WEBAUTHN_ALLOWED_ORIGINS: https://secure.example.com
+  SECURITY_VERIFIER_BASE_URL: http://crypta-security-verifier:9090
+  REQUIRE_VERIFIED_DEVICES_FOR_SESSIONS: "true"
+  RATE_LIMIT_REQUESTS_PER_MINUTE: "120"
+  SMALLTALK_GOVERNANCE_ENABLED: "false"

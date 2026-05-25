@@ -1,16 +1,24 @@
 package com.sovereigncomm.security;
 
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 @Service
 public class TokenService {
     private final SecureRandom secureRandom = new SecureRandom();
+    private final byte[] tokenPepper;
+
+    public TokenService(@Value("${app.security.token-pepper:}") String tokenPepper) {
+        this.tokenPepper = tokenPepper == null ? new byte[0] : tokenPepper.getBytes(StandardCharsets.UTF_8);
+    }
 
     public String newToken() {
         byte[] token = new byte[32];
@@ -37,6 +45,19 @@ public class TokenService {
             return MessageDigest.getInstance("SHA-256").digest(value);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 is not available", e);
+        }
+    }
+
+    public byte[] sessionTokenHash(String token) {
+        if (tokenPepper.length == 0) {
+            return sha256(token);
+        }
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(tokenPepper, "HmacSHA256"));
+            return mac.doFinal(token.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            throw new IllegalStateException("HmacSHA256 is not available", e);
         }
     }
 }

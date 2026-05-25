@@ -33,13 +33,14 @@ Keep vulnerability details private until maintainers have confirmed the issue, p
 
 ## Security Expectations
 
-Crypta currently provides a prototype foundation for ciphertext envelope handling, WebAuthn/passkey flow scaffolding, device trust records, prekey storage, key transparency records, audit logging, encrypted attachment metadata, and governance/policy logic.
+Crypta currently provides a prototype foundation for ciphertext envelope handling, WebAuthn/passkey challenge validation and credential persistence, device trust records, prekey storage, key transparency records with verifier-produced checkpoint metadata, audit logging, encrypted attachment metadata grants, and governance/policy logic.
 
 The project does not yet provide a complete, audited secure messenger. Cryptographic changes, authentication changes, storage changes, logging changes, and deployment changes must be reviewed with extra care and documented clearly.
 
 ## Known Alpha-Stage Limits
 
-- WebAuthn finish verification is intentionally not fully configured in the current backend service.
+- WebAuthn finish endpoints validate challenge, origin, ceremony type, replay state, and credential membership, but full audited authenticator signature verification still requires complete Yubico ceremony storage and review.
+- The Go security verifier is a hardening boundary for production-style verification work, not an independent security audit.
 - Mobile secure-key storage is interface-level scaffolding, not complete native iOS/Android implementation.
 - Signal-style, PQXDH-style, and MLS-inspired concepts are represented as architecture and provider boundaries, not independently verified cryptographic implementations.
 - Server, deployment, and operational controls require hardening before production use.

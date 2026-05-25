@@ -92,6 +92,28 @@ class BackendFlowIntegrationTest {
                 Map.class));
         UUID outsiderDeviceId = createDevice(outsiderUserId, "Outsider Laptop", bootstrapHeaders);
 
+        String registrationChallenge = webauthnChallenge("/api/v1/webauthn/registration/options/" + senderUserId);
+        ResponseEntity<Map> registration = post("/api/v1/webauthn/registration/finish",
+                Map.of("userId", senderUserId.toString(), "deviceId", senderDeviceId.toString(),
+                        "credentialJson", webauthnCredentialJson("webauthn.create", registrationChallenge, "http://localhost", "sender-passkey")),
+                new HttpHeaders(),
+                Map.class);
+        assertThat(registration.getStatusCode()).isEqualTo(HttpStatus.OK);
+        ResponseEntity<Map> replay = post("/api/v1/webauthn/registration/finish",
+                Map.of("userId", senderUserId.toString(), "deviceId", senderDeviceId.toString(),
+                        "credentialJson", webauthnCredentialJson("webauthn.create", registrationChallenge, "http://localhost", "sender-passkey")),
+                new HttpHeaders(),
+                Map.class);
+        assertThat(replay.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        String loginChallenge = webauthnChallenge("/api/v1/webauthn/login/options/" + senderUserId);
+        ResponseEntity<Map> wrongOriginLogin = post("/api/v1/webauthn/login/finish",
+                Map.of("userId", senderUserId.toString(), "deviceId", senderDeviceId.toString(),
+                        "credentialJson", webauthnCredentialJson("webauthn.get", loginChallenge, "https://evil.example", "sender-passkey")),
+                new HttpHeaders(),
+                Map.class);
+        assertThat(wrongOriginLogin.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
         String senderToken = sessionToken(senderUserId, senderDeviceId, bootstrapHeaders);
         String recipientToken = sessionToken(recipientUserId, recipientDeviceId, bootstrapHeaders);
         String outsiderToken = sessionToken(outsiderUserId, outsiderDeviceId, bootstrapHeaders);
@@ -167,8 +189,9 @@ class BackendFlowIntegrationTest {
                 new HttpEntity<>(bearerHeaders(recipientToken)),
                 Map.class);
         assertThat(download.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(download.getBody()).containsEntry("downloadMode", "DATABASE_DOWNLOAD_GRANT");
+        assertThat(download.getBody()).containsEntry("downloadMode", "OBJECT_STORAGE_SIGNED_GRANT");
         assertThat((String) download.getBody().get("downloadToken")).isNotBlank();
+        assertThat((String) download.getBody().get("grantSignatureBase64")).isNotBlank();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM encrypted_attachment_download_grants WHERE attachment_id = ?",
                 Integer.class,
                 attachmentId)).isEqualTo(1);
@@ -230,6 +253,21 @@ class BackendFlowIntegrationTest {
         return (String) response.getBody().get("token");
     }
 
+    private String webauthnChallenge(String path) {
+        ResponseEntity<Map> response = post(path, Map.of(), new HttpHeaders(), Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return (String) response.getBody().get("challengeBase64");
+    }
+
+    private String webauthnCredentialJson(String type, String challenge, String origin, String rawId) {
+        String clientDataJson = """
+                {"type":"%s","challenge":"%s","origin":"%s","crossOrigin":false}
+                """.formatted(type, challenge, origin).trim();
+        return """
+                {"id":"%4$s","rawId":"%4$s","type":"public-key","response":{"clientDataJSON":"%1$s","attestationObject":"%2$s","authenticatorData":"%2$s","signature":"%3$s"}}
+                """.formatted(base64Url(clientDataJson), base64Url("attestation-object"), base64Url("signature"), base64Url(rawId)).trim();
+    }
+
     private Map<String, Object> directMessage(UUID organizationId, UUID senderUserId, UUID senderDeviceId,
                                               UUID recipientUserId, UUID recipientDeviceId,
                                               Map<String, Object> cryptoMetadata) throws Exception {
@@ -267,6 +305,10 @@ class BackendFlowIntegrationTest {
 
     private String base64(String value) {
         return Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String base64Url(String value) {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(value.getBytes(StandardCharsets.UTF_8));
     }
 
     private String sha256Hex(byte[] value) throws Exception {

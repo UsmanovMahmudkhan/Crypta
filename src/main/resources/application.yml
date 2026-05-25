@@ -19,6 +19,18 @@ security:
 app:
   security:
     bootstrap-token: ${BOOTSTRAP_TOKEN}
+    token-pepper: ${TOKEN_PEPPER:}
+    require-verified-devices-for-sessions: ${REQUIRE_VERIFIED_DEVICES_FOR_SESSIONS:false}
+    session-idle-timeout-minutes: ${SESSION_IDLE_TIMEOUT_MINUTES:60}
+    verifier:
+      base-url: ${SECURITY_VERIFIER_BASE_URL:}
+    rate-limit:
+      enabled: ${RATE_LIMIT_ENABLED:true}
+      requests-per-minute: ${RATE_LIMIT_REQUESTS_PER_MINUTE:600}
+  governance:
+    smalltalk:
+      enabled: ${SMALLTALK_GOVERNANCE_ENABLED:false}
+      max-script-chars: ${SMALLTALK_MAX_SCRIPT_CHARS:2000}
   crypto:
     plaintext-rejected: true
   notifications:
@@ -56,3 +68,8 @@ server:
   error:
     include-message: never
     include-stacktrace: never
+app:
+  security:
+    require-verified-devices-for-sessions: true
+    rate-limit:
+      requests-per-minute: ${RATE_LIMIT_REQUESTS_PER_MINUTE:120}
