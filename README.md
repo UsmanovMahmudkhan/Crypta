@@ -17,19 +17,19 @@ The backend is intended to ingest, route, and persist ciphertext envelopes, publ
 
 ## Local Backend Run
 
-Copy `.env.example` to `.env`, set non-default secret values, then start the backend and database with:
+Copy `.env.example` to `.env`, set non-default secret values, then start the backend, database, and Go security verifier with:
 
 ```bash
 docker compose up --build
 ```
 
-For a direct Maven run against the Compose database, export `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `BOOTSTRAP_TOKEN`, `WEBAUTHN_RP_ID`, `WEBAUTHN_RP_NAME`, and `WEBAUTHN_ALLOWED_ORIGINS` before running:
+For a direct Maven run against the Compose database, export `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `BOOTSTRAP_TOKEN`, `TOKEN_PEPPER`, `WEBAUTHN_RP_ID`, `WEBAUTHN_RP_NAME`, `WEBAUTHN_ALLOWED_ORIGINS`, and optionally `SECURITY_VERIFIER_BASE_URL` before running:
 
 ```bash
 mvn spring-boot:run
 ```
 
-Provision organizations, users, and devices with `X-Bootstrap-Token`, then exchange a bootstrapped `userId` and `deviceId` at `POST /api/v1/bootstrap/sessions` for a bearer token. WebAuthn challenge creation is available, but credential finish endpoints fail closed until real passkey verification is configured.
+Provision organizations, users, and devices with `X-Bootstrap-Token`, then exchange a bootstrapped `userId` and `deviceId` at `POST /api/v1/bootstrap/sessions` for a bearer token. WebAuthn challenge creation and finish endpoints validate challenge/origin/replay state, but full audited authenticator signature verification remains a production-readiness item.
 
 ## Documentation
 

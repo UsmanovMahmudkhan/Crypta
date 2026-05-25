@@ -34,9 +34,9 @@ Authentication notes:
 | Method | Path | Purpose | Auth | Request | Response | Security notes |
 | ------ | ---- | ------- | ---- | ------- | -------- | -------------- |
 | `POST` | `/api/v1/webauthn/registration/options/{userId}` | Start passkey registration. | Public. | Path `userId`. | Challenge and public key credential options. | Challenge is stored server-side. |
-| `POST` | `/api/v1/webauthn/registration/finish` | Finish passkey registration. | Public. | `userId`, `credentialJson`. | Session response if configured. | Currently fails closed because verification is not configured. |
+| `POST` | `/api/v1/webauthn/registration/finish` | Finish passkey registration. | Public. | `userId`, optional `deviceId`, `credentialJson` containing the browser credential response. | Session response. | Validates challenge, origin, ceremony type, and replay state before storing credential material; audited authenticator signature verification remains future Yubico ceremony work. |
 | `POST` | `/api/v1/webauthn/login/options/{userId}` | Start passkey login. | Public. | Path `userId`. | Challenge and public key credential options. | Requires an existing credential record. |
-| `POST` | `/api/v1/webauthn/login/finish` | Finish passkey login. | Public. | `userId`, `credentialJson`. | Session response if configured. | Currently fails closed because verification is not configured. |
+| `POST` | `/api/v1/webauthn/login/finish` | Finish passkey login. | Public. | `userId`, optional `deviceId`, `credentialJson` containing the browser assertion response. | Session response. | Validates challenge, origin, ceremony type, replay state, and registered credential membership. |
 
 ## Bootstrap Sessions
 
@@ -52,8 +52,8 @@ Authentication notes:
 | `POST` | `/api/v1/keys/signed-prekeys` | Upload a signed prekey. | Bearer token. | `deviceId`, `keyId`, `algorithm`, `publicKeyBase64`, optional `signatureBase64`. | Empty response. | Protocol validation is not complete. |
 | `POST` | `/api/v1/keys/one-time-prekeys` | Upload a one-time prekey. | Bearer token. | `deviceId`, `keyId`, `algorithm`, `publicKeyBase64`, optional `signatureBase64`. | Empty response. | Intended for Signal-style setup concepts. |
 | `POST` | `/api/v1/keys/pq-prekeys` | Upload a PQ prekey. | Bearer token. | `deviceId`, `keyId`, `algorithm`, `publicKeyBase64`, optional `signatureBase64`. | Empty response. | PQXDH-style concept only; audit required. |
-| `GET` | `/api/v1/keys/bundle/{userId}` | Fetch active public key bundle. | Bearer token. | Path `userId`. | Identity keys and prekeys. | Clients must verify key changes. |
-| `GET` | `/api/v1/keys/transparency/{userId}` | Fetch key transparency proof records. | Bearer token. | Path `userId`. | Latest log index, signed tree head, entries. | External monitoring and consistency verification are TODO. |
+| `GET` | `/api/v1/keys/bundle/{userId}` | Fetch active public key bundle. | Bearer token. | Path `userId`. | Identity keys, atomically claimed one-time/PQ prekeys, and transparency checkpoint summary. | Clients must verify key changes and block PQ downgrades. |
+| `GET` | `/api/v1/keys/transparency/{userId}` | Fetch key transparency proof records. | Bearer token. | Path `userId`. | Latest log index, signed tree head, consistency proof, checkpoint ID, proof version, and entry proofs. | Proofs come from the Go verifier when configured, with deterministic local fallback for development. |
 
 ## Messages
 
@@ -78,7 +78,7 @@ Authentication notes:
 | Method | Path | Purpose | Auth | Request | Response | Security notes |
 | ------ | ---- | ------- | ---- | ------- | -------- | -------------- |
 | `POST` | `/api/v1/attachments` | Create encrypted attachment metadata. | Bearer token. | `roomId`, `objectKey`, `ciphertextSha256`, `ciphertextBytes`, `cryptoMetadata`. | `id`, `createdAt`. | Attachment plaintext and content keys must stay client-side. |
-| `GET` | `/api/v1/attachments/{attachmentId}/download` | Fetch encrypted attachment download metadata. | Bearer token. | Path `attachmentId`. | Object key, hash, size, crypto metadata, download mode. | Production object storage signing is not implemented. |
+| `GET` | `/api/v1/attachments/{attachmentId}/download` | Fetch encrypted attachment download metadata. | Bearer token. | Path `attachmentId`. | Object key, hash, size, crypto metadata, signed grant token, grant signature, expiry, and object-storage download mode. | Grant is metadata-only and never exposes plaintext. |
 
 ## Admin
 
@@ -86,6 +86,9 @@ Authentication notes:
 | ------ | ---- | ------- | ---- | ------- | -------- | -------------- |
 | `POST` | `/api/v1/admin/actions` | Record a signed admin action envelope. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Raw signed action envelope JSON string. | Empty response. | Envelope validation and dual control need hardening. |
 | `POST` | `/api/v1/admin/audit/export` | Request audit export. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `organizationId`, `sinkType`, optional `from`, optional `to`. | Empty response. | SIEM sink is configured out of band. |
+| `GET` | `/api/v1/admin/security/verifier` | Check verifier health. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | None. | Verifier status and mode. | Production readiness fails if verifier configuration is missing. |
+| `GET` | `/api/v1/admin/security/transparency-monitor/{organizationId}` | Check key transparency monitor status. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Path `organizationId`. | Entry count, latest log index, latest entry time, verifier mode. | Operational visibility endpoint. |
+| `POST` | `/api/v1/admin/security/audit/verify/{organizationId}` | Ask verifier to validate audit-chain checkpoint state. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Path `organizationId`. | Verification result and checkpoint ID. | Deeper audit replay remains a future verifier enhancement. |
 | `POST` | `/api/v1/admin/emergency-lockdowns` | Start org or room lockdown. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `organizationId`, optional `roomId`, `reason`, `scope`. | Empty response. | Blocks selected activity by org/room. |
 | `POST` | `/api/v1/admin/emergency-lockdowns/{lockdownId}/end` | End a lockdown. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Optional body with `reason`. | Empty response. | Requires careful audit review. |
 
@@ -94,5 +97,5 @@ Authentication notes:
 | Method | Path | Purpose | Auth | Request | Response | Security notes |
 | ------ | ---- | ------- | ---- | ------- | -------- | -------------- |
 | `POST` | `/api/v1/governance/cql/parse` | Parse a CQL query. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Raw query string. | Parsed query object. | Parser is experimental. |
-| `POST` | `/api/v1/governance/cql/execute` | Execute a CQL query. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Raw query string. | List of result rows. | Query execution must remain tightly constrained. |
-| `POST` | `/api/v1/governance/smalltalk/evaluate` | Evaluate a Smalltalk policy script. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `script`, `context`. | Evaluation result. | Requires sandboxing and review before production use. |
+| `POST` | `/api/v1/governance/cql/execute` | Execute a CQL query. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Raw query string. | List of allowlisted result rows. | Query execution is table and column allowlisted. |
+| `POST` | `/api/v1/governance/smalltalk/evaluate` | Evaluate a Smalltalk policy script. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `script`, `context`. | Evaluation result. | Disabled by default and in production unless explicitly enabled; applies script length and plaintext-shaped output checks. |
