@@ -3,10 +3,13 @@ kind: Kustomization
 namespace: sovereign-comm
 resources:
   - namespace.yaml
+  - default-deny-networkpolicy.yaml
   - secret.example.yaml
   - configmap.yaml
   - deployment.yaml
+  - verifier-deployment.yaml
   - service.yaml
   - ingress.yaml
   - hpa.yaml
   - networkpolicy.yaml
+  - verifier-networkpolicy.yaml
