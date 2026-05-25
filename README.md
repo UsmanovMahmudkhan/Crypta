@@ -2,6 +2,22 @@
 
 Sovereign Communication Platform is a zero-trust, end-to-end encrypted communication system scaffold designed for high-risk corporate and executive environments. It provides secure direct and group messaging pipelines by ensuring that only ciphertext envelopes are ingested, transmitted, or persisted on the server side. The platform is built for organizations requiring absolute data privacy, preventing plaintext leakage even in the event of database or administrator credential compromise.
 
+## Local Backend Run
+
+Copy `.env.example` to `.env`, set non-default secret values, then start the backend and database with:
+
+```bash
+docker compose up --build
+```
+
+For a direct Maven run against the Compose database, export `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `BOOTSTRAP_TOKEN`, `WEBAUTHN_RP_ID`, `WEBAUTHN_RP_NAME`, and `WEBAUTHN_ALLOWED_ORIGINS` before running:
+
+```bash
+mvn spring-boot:run
+```
+
+Provision organizations, users, and devices with `X-Bootstrap-Token`, then exchange a bootstrapped `userId` and `deviceId` at `POST /api/v1/bootstrap/sessions` for a bearer token. WebAuthn challenge creation is available, but credential finish endpoints fail closed until real passkey verification is configured.
+
 Verified reference anchors checked on 2026-05-24:
 * [IETF RFC 9420: Messaging Layer Security](https://www.ietf.org/rfc/rfc9420)
 * [Signal PQXDH specification](https://signal.org/docs/specifications/pqxdh/)
@@ -190,4 +206,3 @@ The platform integrates a dynamic governance plane for real-time compliance audi
   * `POST /api/v1/governance/cql/parse` - Parse CQL query string to abstract AST representation.
   * `POST /api/v1/governance/cql/execute` - Execute secure CQL query against database audit tables.
   * `POST /api/v1/governance/smalltalk/evaluate` - Evaluate Smalltalk block against target object contexts dynamically.
-
