@@ -86,9 +86,15 @@ class BackendFlowIntegrationTest {
                 Map.class));
         UUID senderDeviceId = createDevice(senderUserId, "Sender iPhone", bootstrapHeaders);
         UUID recipientDeviceId = createDevice(recipientUserId, "Recipient Pixel", bootstrapHeaders);
+        UUID outsiderUserId = idFrom(post("/api/v1/users",
+                Map.of("organizationId", organizationId.toString(), "email", "outsider@example.com", "displayName", "Outsider"),
+                bootstrapHeaders,
+                Map.class));
+        UUID outsiderDeviceId = createDevice(outsiderUserId, "Outsider Laptop", bootstrapHeaders);
 
         String senderToken = sessionToken(senderUserId, senderDeviceId, bootstrapHeaders);
         String recipientToken = sessionToken(recipientUserId, recipientDeviceId, bootstrapHeaders);
+        String outsiderToken = sessionToken(outsiderUserId, outsiderDeviceId, bootstrapHeaders);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM api_sessions WHERE token_hash = ?",
                 Integer.class,
                 tokenService.sha256(senderToken))).isEqualTo(1);
@@ -121,6 +127,85 @@ class BackendFlowIntegrationTest {
                 senderHeaders,
                 Map.class);
         assertThat(plaintext.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        ResponseEntity<Map> wrongReceipt = post("/api/v1/messages/receipts",
+                Map.of("messageId", messageId.toString(), "deviceId", recipientDeviceId.toString(), "receiptType", "READ"),
+                senderHeaders,
+                Map.class);
+        assertThat(wrongReceipt.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        ResponseEntity<Map> acceptedReceipt = post("/api/v1/messages/receipts",
+                Map.of("messageId", messageId.toString(), "deviceId", recipientDeviceId.toString(), "receiptType", "READ"),
+                bearerHeaders(recipientToken),
+                Map.class);
+        assertThat(acceptedReceipt.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM message_delivery_receipts WHERE message_id = ? AND device_id = ?",
+                Integer.class,
+                messageId,
+                recipientDeviceId)).isEqualTo(1);
+
+        UUID roomId = idFrom(post("/api/v1/mission-rooms",
+                Map.of("organizationId", organizationId.toString(), "name", "Launch Room", "classification", "SECRET",
+                        "policy", Map.of("minimumAlgorithm", "MLS-1.0")),
+                senderHeaders,
+                Map.class));
+        ResponseEntity<Map> invite = post("/api/v1/mission-rooms/members/invite",
+                Map.of("roomId", roomId.toString(), "userId", recipientUserId.toString(), "reason", "mission-participant"),
+                senderHeaders,
+                Map.class);
+        assertThat(invite.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        UUID attachmentId = idFrom(post("/api/v1/attachments",
+                Map.of("roomId", roomId.toString(), "objectKey", "org/%s/launch-plan.bin".formatted(organizationId),
+                        "ciphertextSha256", sha256Hex("attachment-ciphertext".getBytes(StandardCharsets.UTF_8)),
+                        "ciphertextBytes", 128,
+                        "cryptoMetadata", Map.of("algorithm", "XChaCha20-Poly1305", "keyId", "room-key-1")),
+                senderHeaders,
+                Map.class));
+        ResponseEntity<Map> download = rest.exchange(url("/api/v1/attachments/" + attachmentId + "/download"),
+                HttpMethod.GET,
+                new HttpEntity<>(bearerHeaders(recipientToken)),
+                Map.class);
+        assertThat(download.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(download.getBody()).containsEntry("downloadMode", "DATABASE_DOWNLOAD_GRANT");
+        assertThat((String) download.getBody().get("downloadToken")).isNotBlank();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM encrypted_attachment_download_grants WHERE attachment_id = ?",
+                Integer.class,
+                attachmentId)).isEqualTo(1);
+
+        ResponseEntity<Map> outsiderDownload = rest.exchange(url("/api/v1/attachments/" + attachmentId + "/download"),
+                HttpMethod.GET,
+                new HttpEntity<>(bearerHeaders(outsiderToken)),
+                Map.class);
+        assertThat(outsiderDownload.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        jdbc.update("""
+                        INSERT INTO mdm_devices(organization_id, device_id, mdm_provider, external_device_id, compliance_state, posture, last_seen_at)
+                        VALUES (?, ?, 'test-mdm', ?, 'COMPLIANT', ?::jsonb, now())
+                        """,
+                organizationId,
+                recipientDeviceId,
+                recipientDeviceId.toString(),
+                "{\"hardwareBacked\":true,\"secureEnclave\":true}");
+        ResponseEntity<Map> mdmSync = post("/api/v1/admin/mdm/sync/" + organizationId, Map.of(), bootstrapHeaders, Map.class);
+        assertThat(mdmSync.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(jdbc.queryForObject("SELECT trust_state FROM devices WHERE id = ?", String.class, recipientDeviceId)).isEqualTo("VERIFIED");
+        assertThat(jdbc.queryForObject("SELECT mdm_compliant FROM devices WHERE id = ?", Boolean.class, recipientDeviceId)).isTrue();
+
+        ResponseEntity<Map> auditExport = post("/api/v1/admin/audit/export",
+                Map.of("organizationId", organizationId.toString(), "sinkType", "DATABASE_BUFFER"),
+                bootstrapHeaders,
+                Map.class);
+        assertThat(auditExport.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM siem_export_events", Integer.class)).isPositive();
+
+        ResponseEntity<Map> inlineExport = post("/api/v1/admin/siem/events",
+                """
+                        {"organizationId":"%s","sinkType":"INLINE","eventType":"CONTROL_CHECK","metadata":{"result":"pass"}}
+                        """.formatted(organizationId),
+                bootstrapHeaders,
+                Map.class);
+        assertThat(inlineExport.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     private UUID createDevice(UUID userId, String deviceName, HttpHeaders headers) {

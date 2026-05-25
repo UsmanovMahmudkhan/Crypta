@@ -137,6 +137,11 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Transactional
     public IdResponse registerDevice(DeviceRegisterRequest request) {
         UUID orgId = organizationForUser(request.userId());
+        AuthenticatedActor actor = requireActor();
+        requireOrgAccess(actor, orgId);
+        if (!actor.bootstrap() && !actor.userId().equals(request.userId()) && !hasOrgAdminRole(actor)) {
+            throw new SecurityException("Cannot register a device for another user");
+        }
         byte[] signingKey = decodeBase64(request.deviceSigningPublicKeyBase64(), "deviceSigningPublicKeyBase64");
         byte[] attestation = decodeBase64(request.attestationObjectBase64(), "attestationObjectBase64");
         IdResponse response = returning("""
@@ -158,6 +163,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Transactional
     public void revokeDevice(UUID deviceId, String reason) {
         UUID orgId = organizationForDevice(deviceId);
+        requireDeviceActorOrOrgAdmin(deviceId, orgId);
         jdbc.update("UPDATE devices SET trust_state = 'REVOKED', revoked_at = now(), revoke_reason = ? WHERE id = ?", reason, deviceId);
         jdbc.update("UPDATE api_sessions SET revoked_at = now() WHERE device_id = ?", deviceId);
         appendSecurityEvent(orgId, null, deviceId, "DEVICE_REVOKED", Map.of("reason", reason));
@@ -167,6 +173,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Transactional
     public void uploadIdentityKey(PublicKeyUploadRequest request) {
         UUID orgId = organizationForDevice(request.deviceId());
+        requireDeviceActor(request.deviceId());
         byte[] publicKey = decodeBase64(request.publicKeyBase64(), "publicKeyBase64");
         byte[] signature = decodeBase64(request.signatureBase64(), "signatureBase64");
         Integer nextVersion = jdbc.queryForObject(
@@ -380,6 +387,8 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void recordReceipt(DeliveryReceiptRequest request) {
+        requireDeviceActor(request.deviceId());
+        requireMessageVisibleToDevice(request.messageId(), request.deviceId());
         jdbc.update("""
                         INSERT INTO message_delivery_receipts(message_id, device_id, receipt_type)
                         VALUES (?, ?, ?)
@@ -392,6 +401,9 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Transactional
     public IdResponse createMissionRoom(RoomCreateRequest request) {
         AuthenticatedActor actor = requireActor();
+        if (actor.bootstrap()) {
+            throw new SecurityException("Bearer session is required to create mission rooms");
+        }
         requireOrgAccess(actor, request.organizationId());
         enforceNoActiveLockdown(request.organizationId(), null);
         IdResponse response = returning("""
@@ -419,6 +431,10 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Transactional
     public void inviteMember(MemberChangeRequest request) {
         UUID orgId = organizationForRoom(request.roomId());
+        requireRoomAdmin(request.roomId(), orgId);
+        if (!orgId.equals(organizationForUser(request.userId()))) {
+            throw new SecurityException("Cannot invite users from another organization");
+        }
         enforceNoActiveLockdown(orgId, request.roomId());
         jdbc.update("""
                         INSERT INTO room_members(room_id, user_id, role, membership_state)
@@ -434,6 +450,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Transactional
     public void removeMember(MemberChangeRequest request) {
         UUID orgId = organizationForRoom(request.roomId());
+        requireRoomAdmin(request.roomId(), orgId);
         jdbc.update("""
                         UPDATE room_members
                         SET membership_state = 'REMOVED', removed_at = now()
@@ -447,6 +464,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Transactional
     public void updatePolicy(RoomPolicyUpdateRequest request) {
         UUID orgId = organizationForRoom(request.roomId());
+        requireRoomAdmin(request.roomId(), orgId);
         assertNoPlaintext(request.policy());
         Integer version = jdbc.queryForObject("SELECT COALESCE(MAX(version), 0) + 1 FROM room_policies WHERE room_id = ?", Integer.class, request.roomId());
         jdbc.update("""
@@ -497,7 +515,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     public Map<String, Object> createEncryptedDownload(UUID attachmentId) {
         return jdbc.query("""
-                        SELECT object_key, ciphertext_sha256, ciphertext_bytes, crypto_metadata::text
+                        SELECT organization_id, room_id, object_key, ciphertext_sha256, ciphertext_bytes, crypto_metadata::text
                         FROM encrypted_attachments
                         WHERE id = ? AND deleted_at IS NULL
                         """,
@@ -505,13 +523,30 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                     if (!rs.next()) {
                         throw new NoSuchElementException("Attachment not found");
                     }
+                    UUID organizationId = rs.getObject("organization_id", UUID.class);
+                    UUID roomId = rs.getObject("room_id", UUID.class);
+                    AuthenticatedActor actor = requireActor();
+                    requireOrgAccess(actor, organizationId);
+                    requireRoomMember(actor, roomId);
+                    Instant expiresAt = Instant.now().plus(5, ChronoUnit.MINUTES);
+                    String objectKey = rs.getString("object_key");
+                    byte[] ciphertextHash = rs.getBytes("ciphertext_sha256");
+                    String downloadToken = tokenService.newToken();
+                    jdbc.update("""
+                                    INSERT INTO encrypted_attachment_download_grants(
+                                        attachment_id, requester_user_id, requester_device_id, token_hash, expires_at)
+                                    VALUES (?, ?, ?, ?, ?)
+                                    """,
+                            attachmentId, actor.userId(), actor.deviceId(), tokenService.sha256(downloadToken), Timestamp.from(expiresAt));
                     return Map.of(
                             "attachmentId", attachmentId,
-                            "objectKey", rs.getString("object_key"),
-                            "ciphertextSha256", Base64.getEncoder().encodeToString(rs.getBytes("ciphertext_sha256")),
+                            "objectKey", objectKey,
+                            "ciphertextSha256", Base64.getEncoder().encodeToString(ciphertextHash),
                             "ciphertextBytes", rs.getLong("ciphertext_bytes"),
                             "cryptoMetadata", fromJson(rs.getString("crypto_metadata")),
-                            "downloadMode", "OBJECT_STORAGE_SIGNING_REQUIRED");
+                            "downloadMode", "DATABASE_DOWNLOAD_GRANT",
+                            "downloadToken", downloadToken,
+                            "expiresAt", expiresAt.toString());
                 },
                 attachmentId);
     }
@@ -533,12 +568,56 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void exportAudit(AuditExportRequest request) {
-        jdbc.update("""
-                        INSERT INTO siem_exports(organization_id, sink_type, sink_config_ref, status)
-                        VALUES (?, ?, 'configured-out-of-band', 'ACTIVE')
+        requireOrgAccess(requireActor(), request.organizationId());
+        if (request.from() != null && request.to() != null && request.from().isAfter(request.to())) {
+            throw new IllegalArgumentException("Audit export from must be before to");
+        }
+        UUID exportId = upsertSiemExport(request.organizationId(), request.sinkType());
+        List<Map<String, Object>> events = jdbc.query("""
+                        SELECT id, event_type, metadata::text, created_at
+                        FROM audit_events
+                        WHERE organization_id = ?
+                          AND (?::timestamptz IS NULL OR created_at >= ?)
+                          AND (?::timestamptz IS NULL OR created_at <= ?)
+                          AND NOT EXISTS (
+                              SELECT 1
+                              FROM siem_export_events exported
+                              WHERE exported.siem_export_id = ?
+                                AND exported.audit_event_id = audit_events.id
+                          )
+                        ORDER BY created_at, id
+                        LIMIT 1000
                         """,
-                request.organizationId(), request.sinkType());
-        appendSecurityEvent(request.organizationId(), null, null, "AUDIT_EXPORT_REQUESTED", Map.of("sinkType", request.sinkType()));
+                (rs, rowNum) -> Map.of(
+                        "id", rs.getObject("id", UUID.class),
+                        "eventType", rs.getString("event_type"),
+                        "metadata", fromJson(rs.getString("metadata")),
+                        "createdAt", rs.getTimestamp("created_at").toInstant()),
+                request.organizationId(),
+                nullableTimestamp(request.from()), nullableTimestamp(request.from()),
+                nullableTimestamp(request.to()), nullableTimestamp(request.to()),
+                exportId);
+        for (Map<String, Object> event : events) {
+            jdbc.update("""
+                            INSERT INTO siem_export_events(siem_export_id, audit_event_id, normalized_event, status)
+                            VALUES (?, ?, ?::jsonb, 'EXPORTED')
+                            ON CONFLICT DO NOTHING
+                            """,
+                    exportId, event.get("id"), toJson(event));
+        }
+        if (!events.isEmpty()) {
+            UUID lastEventId = (UUID) events.getLast().get("id");
+            jdbc.update("""
+                            UPDATE siem_exports
+                            SET last_exported_event_id = ?, last_exported_at = now(), status = 'ACTIVE', updated_at = now()
+                            WHERE id = ?
+                            """,
+                    lastEventId, exportId);
+        }
+        appendSecurityEvent(request.organizationId(), null, null, "AUDIT_EXPORT_COMPLETED", Map.of(
+                "sinkType", request.sinkType(),
+                "exportedCount", events.size(),
+                "siemExportId", exportId.toString()));
     }
 
     @Override
@@ -558,12 +637,54 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
 
     @Override
     public void syncDevicePosture(UUID organizationId) {
-        appendSecurityEvent(organizationId, null, null, "MDM_SYNC_REQUESTED", Map.of("status", "connector_required"));
+        requireOrgAccess(requireActor(), organizationId);
+        int compliant = jdbc.update("""
+                        UPDATE devices d
+                        SET mdm_compliant = true,
+                            hardware_backed = COALESCE((m.posture ->> 'hardwareBacked')::boolean, d.hardware_backed),
+                            strongbox_or_secure_enclave = COALESCE((m.posture ->> 'secureEnclave')::boolean, d.strongbox_or_secure_enclave),
+                            trust_state = CASE WHEN d.revoked_at IS NULL THEN 'VERIFIED' ELSE d.trust_state END,
+                            updated_at = now()
+                        FROM mdm_devices m
+                        WHERE d.id = m.device_id
+                          AND m.organization_id = ?
+                          AND UPPER(m.compliance_state) IN ('COMPLIANT', 'MANAGED', 'HEALTHY')
+                        """,
+                organizationId);
+        int nonCompliant = jdbc.update("""
+                        UPDATE devices d
+                        SET mdm_compliant = false,
+                            trust_state = CASE WHEN d.revoked_at IS NULL THEN 'QUARANTINED' ELSE d.trust_state END,
+                            updated_at = now()
+                        FROM mdm_devices m
+                        WHERE d.id = m.device_id
+                          AND m.organization_id = ?
+                          AND UPPER(m.compliance_state) NOT IN ('COMPLIANT', 'MANAGED', 'HEALTHY')
+                        """,
+                organizationId);
+        appendSecurityEvent(organizationId, null, null, "MDM_SYNC_COMPLETED", Map.of(
+                "compliantDevices", compliant,
+                "nonCompliantDevices", nonCompliant));
     }
 
     @Override
+    @Transactional
     public void exportEvent(String normalizedAuditEventJson) {
-        assertNoPlaintext(fromJson(normalizedAuditEventJson));
+        Map<String, Object> normalizedEvent = fromJson(normalizedAuditEventJson);
+        assertNoPlaintext(normalizedEvent);
+        Object organization = normalizedEvent.get("organizationId");
+        if (organization == null) {
+            throw new IllegalArgumentException("normalizedAuditEventJson requires organizationId");
+        }
+        UUID organizationId = UUID.fromString(String.valueOf(organization));
+        requireOrgAccess(requireActor(), organizationId);
+        UUID exportId = upsertSiemExport(organizationId, String.valueOf(normalizedEvent.getOrDefault("sinkType", "INLINE")));
+        jdbc.update("""
+                        INSERT INTO siem_export_events(siem_export_id, normalized_event, status)
+                        VALUES (?, ?::jsonb, 'EXPORTED')
+                        """,
+                exportId, toJson(normalizedEvent));
+        appendSecurityEvent(organizationId, null, null, "SIEM_EVENT_EXPORTED", Map.of("siemExportId", exportId.toString()));
     }
 
     @Override
@@ -663,6 +784,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
 
     private void uploadPrekey(String table, PreKeyUploadRequest request, boolean requiresSignature, boolean hasExpiry) {
         organizationForDevice(request.deviceId());
+        requireDeviceActor(request.deviceId());
         byte[] publicKey = decodeBase64(request.publicKeyBase64(), "publicKeyBase64");
         byte[] signature = request.signatureBase64() == null || request.signatureBase64().isBlank()
                 ? new byte[0]
@@ -785,6 +907,115 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         if (count != null && count > 0) {
             throw new SecurityException("Organization or room is under active lockdown");
         }
+    }
+
+    private void requireDeviceActor(UUID deviceId) {
+        AuthenticatedActor actor = requireActor();
+        UUID orgId = organizationForDevice(deviceId);
+        requireOrgAccess(actor, orgId);
+        if (!actor.bootstrap() && !deviceId.equals(actor.deviceId())) {
+            throw new SecurityException("Device-scoped operation must match authenticated session");
+        }
+    }
+
+    private void requireDeviceActorOrOrgAdmin(UUID deviceId, UUID orgId) {
+        AuthenticatedActor actor = requireActor();
+        requireOrgAccess(actor, orgId);
+        if (actor.bootstrap() || hasOrgAdminRole(actor) || deviceId.equals(actor.deviceId())) {
+            return;
+        }
+        throw new SecurityException("Device owner or admin role is required");
+    }
+
+    private void requireRoomAdmin(UUID roomId, UUID organizationId) {
+        AuthenticatedActor actor = requireActor();
+        requireOrgAccess(actor, organizationId);
+        if (actor.bootstrap()) {
+            throw new SecurityException("Bearer session is required for room administration");
+        }
+        if (hasOrgAdminRole(actor)) {
+            return;
+        }
+        Integer owner = jdbc.queryForObject("""
+                        SELECT count(*)
+                        FROM room_members
+                        WHERE room_id = ?
+                          AND user_id = ?
+                          AND role = 'OWNER'
+                          AND membership_state = 'ACTIVE'
+                        """,
+                Integer.class,
+                roomId, actor.userId());
+        if (owner == null || owner == 0) {
+            throw new SecurityException("Room owner or admin role is required");
+        }
+    }
+
+    private void requireRoomMember(AuthenticatedActor actor, UUID roomId) {
+        if (roomId == null || actor.bootstrap() || hasOrgAdminRole(actor)) {
+            return;
+        }
+        Integer member = jdbc.queryForObject("""
+                        SELECT count(*)
+                        FROM room_members
+                        WHERE room_id = ?
+                          AND user_id = ?
+                          AND membership_state = 'ACTIVE'
+                        """,
+                Integer.class,
+                roomId, actor.userId());
+        if (member == null || member == 0) {
+            throw new SecurityException("Room membership is required");
+        }
+    }
+
+    private void requireMessageVisibleToDevice(UUID messageId, UUID deviceId) {
+        Integer visible = jdbc.queryForObject("""
+                        SELECT count(*)
+                        FROM encrypted_messages m
+                        WHERE m.id = ?
+                          AND m.deleted_at IS NULL
+                          AND (
+                              m.recipient_device_id = ?
+                              OR m.sender_device_id = ?
+                              OR m.room_id IN (
+                                  SELECT rm.room_id
+                                  FROM room_members rm
+                                  JOIN devices d ON d.user_id = rm.user_id
+                                  WHERE d.id = ? AND rm.membership_state = 'ACTIVE'
+                              )
+                          )
+                        """,
+                Integer.class,
+                messageId, deviceId, deviceId, deviceId);
+        if (visible == null || visible == 0) {
+            throw new SecurityException("Receipt device cannot access message");
+        }
+    }
+
+    private boolean hasOrgAdminRole(AuthenticatedActor actor) {
+        return actor.hasRole("ADMIN") || actor.hasRole("ORG_ADMIN") || actor.hasRole("PLATFORM_OPERATOR");
+    }
+
+    private UUID upsertSiemExport(UUID organizationId, String sinkType) {
+        return jdbc.query("""
+                        INSERT INTO siem_exports(organization_id, sink_type, sink_config_ref, status)
+                        VALUES (?, ?, 'database-backed-export-buffer', 'ACTIVE')
+                        ON CONFLICT (organization_id, sink_type)
+                        DO UPDATE SET status = 'ACTIVE', updated_at = now()
+                        RETURNING id
+                        """,
+                rs -> {
+                    if (!rs.next()) {
+                        throw new IllegalStateException("SIEM export upsert did not return an id");
+                    }
+                    return rs.getObject("id", UUID.class);
+                },
+                organizationId, sinkType);
+    }
+
+    private Timestamp nullableTimestamp(Instant instant) {
+        return instant == null ? null : Timestamp.from(instant);
     }
 
     private UUID organizationForUser(UUID userId) {
