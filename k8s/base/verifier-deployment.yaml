@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crypta-security-verifier
+  labels:
+    app.kubernetes.io/name: sovereign-comm
+    app.kubernetes.io/component: security-verifier
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sovereign-comm
+      app.kubernetes.io/component: security-verifier
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sovereign-comm
+        app.kubernetes.io/component: security-verifier
+    spec:
+      serviceAccountName: crypta-security-verifier
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: verifier
+          image: ghcr.io/your-org/crypta-security-verifier:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 9090
+          env:
+            - name: VERIFIER_ADDR
+              value: ":9090"
+            - name: VERIFIER_SIGNING_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: sovereign-comm-secrets
+                  key: VERIFIER_SIGNING_SECRET
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crypta-security-verifier
+  labels:
+    app.kubernetes.io/name: sovereign-comm
+    app.kubernetes.io/component: security-verifier
+spec:
+  selector:
+    app.kubernetes.io/name: sovereign-comm
+    app.kubernetes.io/component: security-verifier
+  ports:
+    - name: http
+      port: 9090
+      targetPort: http
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: crypta-security-verifier
+automountServiceAccountToken: false
