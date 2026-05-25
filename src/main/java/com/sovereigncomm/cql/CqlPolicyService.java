@@ -9,6 +9,10 @@ import java.util.*;
 
 @Service
 public class CqlPolicyService {
+    private static final Map<String, Set<String>> ALLOWED_COLUMNS = Map.of(
+            "audit_events", Set.of("id", "organization_id", "actor_user_id", "actor_device_id", "event_type", "target_type", "target_id", "created_at"),
+            "devices", Set.of("id", "user_id", "organization_id", "platform", "trust_state", "hardware_backed", "strongbox_or_secure_enclave", "mdm_compliant", "created_at", "updated_at"),
+            "rooms", Set.of("id", "organization_id", "name", "classification", "room_type", "lockdown_state", "created_at", "updated_at"));
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -74,7 +78,7 @@ public class CqlPolicyService {
 
         StringBuilder sql = new StringBuilder("SELECT ");
         if (query.isAllFields()) {
-            sql.append("*");
+            sql.append(String.join(", ", ALLOWED_COLUMNS.get(tableName)));
         } else {
             List<String> fields = query.getFields();
             if (fields.isEmpty()) {
@@ -82,7 +86,7 @@ public class CqlPolicyService {
             } else {
                 for (int i = 0; i < fields.size(); i++) {
                     if (i > 0) sql.append(", ");
-                    sql.append(sanitizeColumnName(fields.get(i)));
+                    sql.append(sanitizeColumnName(tableName, fields.get(i)));
                 }
             }
         }
@@ -91,7 +95,7 @@ public class CqlPolicyService {
 
         List<Object> params = new ArrayList<>();
         if (query.getFilterField() != null) {
-            sql.append(" WHERE ").append(sanitizeColumnName(query.getFilterField()));
+            sql.append(" WHERE ").append(sanitizeColumnName(tableName, query.getFilterField()));
             
             String op = query.getFilterOperator().toUpperCase();
             String val = query.getFilterValue();
@@ -113,11 +117,15 @@ public class CqlPolicyService {
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
 
-    private String sanitizeColumnName(String col) {
+    private String sanitizeColumnName(String tableName, String col) {
         if (col == null || !col.matches("^[a-zA-Z_][a-zA-Z0-9_]*$")) {
             throw new IllegalArgumentException("Invalid column or field name: " + col);
         }
-        return col.toLowerCase();
+        String normalized = col.toLowerCase();
+        if (!ALLOWED_COLUMNS.getOrDefault(tableName, Set.of()).contains(normalized)) {
+            throw new IllegalArgumentException("Column is not available to CQL governance queries: " + normalized);
+        }
+        return normalized;
     }
 
     private Object parseValueType(String column, String val) {
