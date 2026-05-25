@@ -78,16 +78,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public SessionResponse finishWebAuthnRegistration(WebAuthnFinishRequest request) {
-        consumeChallenge(request.userId(), "REGISTRATION");
-        byte[] credentialHash = tokenService.sha256(request.credentialJson());
-        jdbc.update("""
-                        INSERT INTO webauthn_credentials(user_id, credential_id, public_key_cose, attestation_type)
-                        VALUES (?, ?, ?, 'self')
-                        ON CONFLICT (credential_id) DO UPDATE SET last_used_at = now()
-                        """,
-                request.userId(), credentialHash, credentialHash);
-        appendSecurityEventForUser(request.userId(), "WEBAUTHN_REGISTERED", Map.of("verificationMode", "challenge_replay_protected"));
-        return issueSession(request.userId());
+        throw new SecurityException("WebAuthn credential verification is not configured");
     }
 
     @Override
@@ -104,10 +95,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public SessionResponse finishWebAuthnLogin(WebAuthnFinishRequest request) {
-        consumeChallenge(request.userId(), "LOGIN");
-        jdbc.update("UPDATE webauthn_credentials SET last_used_at = now() WHERE user_id = ?", request.userId());
-        appendSecurityEventForUser(request.userId(), "WEBAUTHN_LOGIN", Map.of("verificationMode", "challenge_replay_protected"));
-        return issueSession(request.userId());
+        throw new SecurityException("WebAuthn credential verification is not configured");
     }
 
     @Override
@@ -637,10 +625,6 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         if (updated != 1) {
             throw new SecurityException("No active WebAuthn challenge or challenge already consumed");
         }
-    }
-
-    private SessionResponse issueSession(UUID userId) {
-        return issueSession(userId, latestDeviceForUser(userId));
     }
 
     private SessionResponse issueSession(UUID userId, UUID deviceId) {
