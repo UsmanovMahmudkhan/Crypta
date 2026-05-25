@@ -4,6 +4,13 @@ Crypta is a zero-trust, end-to-end encrypted communication platform scaffold des
 
 The backend is intended to ingest, route, and persist ciphertext envelopes, public key material, policy records, encrypted attachment metadata, and audit events while keeping plaintext and private keys on client devices. Some code and package names still use `Sovereign Comm`.
 
+## Preview
+
+<p align="center">
+  <img src="docs/images/iphone-preview.png" width="260" alt="iPhone app preview" />
+  <img src="docs/images/samsung-preview.png" width="260" alt="Samsung app preview" />
+</p>
+
 ## Local Backend Run
 
 Copy `.env.example` to `.env`, set non-default secret values, then start the backend and database with:
