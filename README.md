@@ -11,6 +11,10 @@ The backend is intended to ingest, route, and persist ciphertext envelopes, publ
   <img src="docs/images/samsung-preview.png" width="260" alt="Samsung app preview" />
 </p>
 
+<p align="center">
+  <img src="docs/images/encrypted-message-animation.gif" width="520" alt="Encrypted message animation preview" />
+</p>
+
 ## Local Backend Run
 
 Copy `.env.example` to `.env`, set non-default secret values, then start the backend and database with:
