@@ -37,7 +37,7 @@ public final class CommonDtos {
     public record WebAuthnStartResponse(@NotBlank String challengeBase64, Map<String, Object> publicKeyCredentialOptions) {
     }
 
-    public record WebAuthnFinishRequest(@NotNull UUID userId, @NotBlank String credentialJson) {
+    public record WebAuthnFinishRequest(@NotNull UUID userId, UUID deviceId, @NotBlank String credentialJson) {
     }
 
     public record BootstrapSessionRequest(@NotNull UUID userId, @NotNull UUID deviceId) {
@@ -52,10 +52,13 @@ public final class CommonDtos {
     public record PreKeyUploadRequest(@NotNull UUID deviceId, @NotBlank String keyId, @NotBlank String algorithm, @NotBlank String publicKeyBase64, String signatureBase64) {
     }
 
-    public record KeyBundleResponse(UUID userId, UUID deviceId, List<Map<String, Object>> identityKeys, List<Map<String, Object>> prekeys) {
+    public record KeyBundleResponse(UUID userId, UUID deviceId, List<Map<String, Object>> identityKeys, List<Map<String, Object>> prekeys,
+                                    Map<String, Object> transparencyProof) {
     }
 
-    public record KeyTransparencyProofResponse(UUID userId, long latestLogIndex, String latestSignedTreeHeadBase64, List<Map<String, Object>> entries) {
+    public record KeyTransparencyProofResponse(UUID userId, long latestLogIndex, String latestSignedTreeHeadBase64,
+                                               String consistencyProofBase64, String checkpointId, String proofVersion,
+                                               List<Map<String, Object>> entries) {
     }
 
     public record RoomCreateRequest(@NotNull UUID organizationId, @NotBlank String name, @NotBlank String classification, Map<String, Object> policy) {
