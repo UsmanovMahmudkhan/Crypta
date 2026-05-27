@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -39,9 +40,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         Window window = windows.compute(key, (ignored, current) ->
                 current == null || current.minute != minute ? new Window(minute) : current);
         if (window.count.incrementAndGet() > requestsPerMinute) {
-            response.setStatus(429);
+            String requestId = String.valueOf(request.getAttribute("requestId") == null ? "" : request.getAttribute("requestId"));
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Too Many Requests\",\"message\":\"Rate limit exceeded\"}");
+            response.getWriter().write("""
+                    {"timestamp":"%s","status":429,"error":"Too Many Requests","message":"Rate limit exceeded","path":"%s","requestId":"%s"}""".formatted(
+                    Instant.now(), request.getRequestURI(), requestId));
             return;
         }
         filterChain.doFilter(request, response);
