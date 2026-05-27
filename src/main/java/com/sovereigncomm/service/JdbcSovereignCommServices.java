@@ -30,6 +30,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         AdminGovernanceService, MDMIntegrationService, SIEMExportService, EmergencyLockdownService {
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
+    private static final Set<String> ALLOWED_ROLES = Set.of("MEMBER", "ADMIN", "ORG_ADMIN", "PLATFORM_OPERATOR");
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
@@ -867,6 +868,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         options.put("timeout", 300000);
         options.put("userVerification", "required");
         options.put("attestation", "direct");
+        options.put("demoOnly", true);
         options.put("verificationMode", "challenge_replay_protected_until_yubico_finish_verification_is_wired");
         return new WebAuthnStartResponse(challenge, options);
     }
@@ -1259,7 +1261,11 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     }
 
     private String normalizeRole(String role) {
-        return role == null || role.isBlank() ? "MEMBER" : role.trim().toUpperCase(Locale.ROOT).replace('-', '_');
+        String normalized = role == null || role.isBlank() ? "MEMBER" : role.trim().toUpperCase(Locale.ROOT).replace('-', '_');
+        if (!ALLOWED_ROLES.contains(normalized)) {
+            throw new IllegalArgumentException("Unsupported role: " + role);
+        }
+        return normalized;
     }
 
     private Map<String, Object> nullToEmpty(Map<String, Object> value) {
@@ -1287,14 +1293,20 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     }
 
     private byte[] decodeFlexibleHash(String value, String fieldName) {
+        byte[] decoded;
         if (value.matches("(?i)[0-9a-f]{64}")) {
             byte[] bytes = new byte[32];
             for (int i = 0; i < bytes.length; i++) {
                 bytes[i] = (byte) Integer.parseInt(value.substring(i * 2, i * 2 + 2), 16);
             }
-            return bytes;
+            decoded = bytes;
+        } else {
+            decoded = decodeBase64(value, fieldName);
         }
-        return decodeBase64(value, fieldName);
+        if (decoded.length != 32) {
+            throw new IllegalArgumentException(fieldName + " must be a SHA-256 value");
+        }
+        return decoded;
     }
 
     private String toJson(Object value) {
