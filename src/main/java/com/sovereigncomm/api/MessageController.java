@@ -7,7 +7,10 @@ import com.sovereigncomm.api.dto.CommonDtos.IdResponse;
 import com.sovereigncomm.api.dto.CommonDtos.MessageInboxRequest;
 import com.sovereigncomm.service.DirectMessageService;
 import com.sovereigncomm.service.GroupMessageService;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.Valid;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@Validated
 @RequestMapping("/api/v1/messages")
 public class MessageController {
     private final DirectMessageService directMessageService;
@@ -44,7 +48,7 @@ public class MessageController {
     List<EncryptedMessageResponse> inbox(
             @RequestParam UUID deviceId,
             @RequestParam(required = false) Instant after,
-            @RequestParam(required = false) Integer limit) {
+            @RequestParam(required = false) @Min(1) @Max(100) Integer limit) {
         return directMessageService.inbox(new MessageInboxRequest(deviceId, after, limit));
     }
 

@@ -37,6 +37,7 @@ Provision organizations, users, and devices with `X-Bootstrap-Token`, then excha
 - [Threat Model](THREAT_MODEL.md)
 - [API Overview](API.md)
 - [Deployment](DEPLOYMENT.md)
+- [Internal Demo Runbook](docs/internal-demo.md)
 - [Security Policy](SECURITY.md)
 - [Roadmap](ROADMAP.md)
 - [Contributing](CONTRIBUTING.md)
