@@ -140,13 +140,14 @@ The current scaffold provides partial protection against:
 - Basic device revocation at the backend session layer.
 - Some audit-log tampering through hash-chain style records.
 - Some public key history tampering through key transparency record structure.
+- Challenge replay and origin-forgery attempts in passkey ceremonies through a Yubico-backed WebAuthn verification boundary.
 
 ## What Crypta Does Not Yet Protect Against
 
 Crypta does not yet provide:
 
 - Independent cryptographic assurance.
-- Complete WebAuthn/passkey verification.
+- External WebAuthn/passkey implementation review and attestation trust policy.
 - Complete native secure-key storage.
 - Complete Signal Protocol, PQXDH, Double Ratchet, or MLS implementation.
 - Verified encrypted group messaging.

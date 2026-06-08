@@ -7,6 +7,27 @@ import com.sovereigncomm.config.AuthenticatedActor;
 import com.sovereigncomm.security.PlaintextGuard;
 import com.sovereigncomm.security.SecurityVerifierClient;
 import com.sovereigncomm.security.TokenService;
+import com.yubico.webauthn.AssertionRequest;
+import com.yubico.webauthn.AssertionResult;
+import com.yubico.webauthn.CredentialRepository;
+import com.yubico.webauthn.FinishAssertionOptions;
+import com.yubico.webauthn.FinishRegistrationOptions;
+import com.yubico.webauthn.RegisteredCredential;
+import com.yubico.webauthn.RegistrationResult;
+import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.StartAssertionOptions;
+import com.yubico.webauthn.StartRegistrationOptions;
+import com.yubico.webauthn.data.AttestationConveyancePreference;
+import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
+import com.yubico.webauthn.data.AuthenticatorTransport;
+import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.PublicKeyCredential;
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.PublicKeyCredentialType;
+import com.yubico.webauthn.data.RelyingPartyIdentity;
+import com.yubico.webauthn.data.UserIdentity;
+import com.yubico.webauthn.data.UserVerificationRequirement;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
@@ -67,7 +88,15 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Transactional
     public WebAuthnStartResponse startWebAuthnRegistration(UUID userId) {
         requireUserExists(userId);
-        return startWebAuthn(userId, "REGISTRATION");
+        requireWebAuthnRegistrationActor(userId);
+        PublicKeyCredentialCreationOptions options = relyingParty().startRegistration(StartRegistrationOptions.builder()
+                .user(userIdentity(userId))
+                .authenticatorSelection(AuthenticatorSelectionCriteria.builder()
+                        .userVerification(UserVerificationRequirement.REQUIRED)
+                        .build())
+                .timeout(300000)
+                .build());
+        return storeWebAuthnChallenge(userId, "REGISTRATION", options.getChallenge().getBase64Url(), toYubicoMap(options));
     }
 
     @Override
@@ -86,20 +115,41 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public SessionResponse finishWebAuthnRegistration(WebAuthnFinishRequest request) {
-        String challenge = consumeChallenge(request.userId(), "REGISTRATION");
-        Map<String, Object> credential = parseWebAuthnCredential(request.credentialJson(), "webauthn.create", challenge);
-        byte[] credentialId = decodeBase64Url(requiredString(credential, "rawId"), "rawId");
-        Map<String, Object> response = nestedMap(credential, "response");
-        byte[] attestationObject = decodeBase64Url(requiredString(response, "attestationObject"), "attestationObject");
-        jdbc.update("""
-                        INSERT INTO webauthn_credentials(user_id, credential_id, public_key_cose, transports, attestation_type, backup_eligible, backup_state)
-                        VALUES (?, ?, ?, ?, 'packed_or_platform_attestation_pending_review', false, false)
+        requireUserExists(request.userId());
+        requireWebAuthnRegistrationActor(request.userId());
+        WebAuthnChallenge challenge = consumeChallenge(request.userId(), "REGISTRATION");
+        RegistrationResult result;
+        try {
+            result = relyingParty().finishRegistration(FinishRegistrationOptions.builder()
+                    .request(PublicKeyCredentialCreationOptions.fromJson(challenge.requestOptionsJson()))
+                    .response(PublicKeyCredential.parseRegistrationResponseJson(request.credentialJson()))
+                    .build());
+        } catch (Exception e) {
+            throw new SecurityException("WebAuthn registration verification failed", e);
+        }
+        int inserted = jdbc.update("""
+                        INSERT INTO webauthn_credentials(
+                            user_id, credential_id, public_key_cose, signature_count, transports,
+                            attestation_type, backup_eligible, backup_state, verification_status)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'VERIFIED')
                         ON CONFLICT (credential_id) DO NOTHING
                         """,
-                request.userId(), credentialId, attestationObject, new String[]{"internal"});
+                request.userId(),
+                result.getKeyId().getId().getBytes(),
+                result.getPublicKeyCose().getBytes(),
+                result.getSignatureCount(),
+                result.getKeyId().getTransports()
+                        .map(transports -> transports.stream().map(AuthenticatorTransport::getId).toArray(String[]::new))
+                        .orElseGet(() -> new String[0]),
+                result.getAttestationType().name(),
+                result.isBackupEligible(),
+                result.isBackedUp());
+        if (inserted != 1) {
+            throw new SecurityException("Passkey credential is already registered");
+        }
         UUID deviceId = request.deviceId() == null ? latestDeviceForUser(request.userId()) : request.deviceId();
         appendSecurityEventForUser(request.userId(), "WEBAUTHN_CREDENTIAL_REGISTERED", Map.of("credentialIdHashBase64",
-                Base64.getEncoder().encodeToString(tokenService.sha256(credentialId))));
+                Base64.getEncoder().encodeToString(tokenService.sha256(result.getKeyId().getId().getBytes()))));
         return issueSession(request.userId(), deviceId);
     }
 
@@ -107,26 +157,45 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Transactional
     public WebAuthnStartResponse startWebAuthnLogin(UUID userId) {
         requireUserExists(userId);
-        Integer credentials = jdbc.queryForObject("SELECT count(*) FROM webauthn_credentials WHERE user_id = ?", Integer.class, userId);
+        Integer credentials = jdbc.queryForObject("SELECT count(*) FROM webauthn_credentials WHERE user_id = ? AND verification_status = 'VERIFIED'", Integer.class, userId);
         if (credentials == null || credentials == 0) {
             throw new SecurityException("User has no registered passkey");
         }
-        return startWebAuthn(userId, "LOGIN");
+        AssertionRequest request = relyingParty().startAssertion(StartAssertionOptions.builder()
+                .username(userId.toString())
+                .userVerification(UserVerificationRequirement.REQUIRED)
+                .timeout(300000)
+                .build());
+        return storeWebAuthnChallenge(userId, "LOGIN",
+                request.getPublicKeyCredentialRequestOptions().getChallenge().getBase64Url(),
+                toYubicoMap(request));
     }
 
     @Override
     @Transactional
     public SessionResponse finishWebAuthnLogin(WebAuthnFinishRequest request) {
-        String challenge = consumeChallenge(request.userId(), "LOGIN");
-        Map<String, Object> credential = parseWebAuthnCredential(request.credentialJson(), "webauthn.get", challenge);
-        byte[] credentialId = decodeBase64Url(requiredString(credential, "rawId"), "rawId");
+        requireUserExists(request.userId());
+        WebAuthnChallenge challenge = consumeChallenge(request.userId(), "LOGIN");
+        AssertionResult result;
+        try {
+            result = relyingParty().finishAssertion(FinishAssertionOptions.builder()
+                    .request(AssertionRequest.fromJson(challenge.requestOptionsJson()))
+                    .response(PublicKeyCredential.parseAssertionResponseJson(request.credentialJson()))
+                    .build());
+        } catch (Exception e) {
+            throw new SecurityException("WebAuthn login verification failed", e);
+        }
+        if (!result.isSuccess() || !request.userId().toString().equals(result.getUsername())) {
+            throw new SecurityException("Passkey assertion is not valid for the requested user");
+        }
         Integer updated = jdbc.update("""
                         UPDATE webauthn_credentials
-                        SET signature_count = signature_count + 1,
+                        SET signature_count = ?,
                             last_used_at = now()
                         WHERE user_id = ? AND credential_id = ?
+                          AND verification_status = 'VERIFIED'
                         """,
-                request.userId(), credentialId);
+                result.getSignatureCount(), request.userId(), result.getCredentialId().getBytes());
         if (updated == null || updated != 1) {
             throw new SecurityException("Passkey credential is not registered for the requested user");
         }
@@ -137,6 +206,10 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public IdResponse createOrganization(OrganizationCreateRequest request) {
+        AuthenticatedActor actor = requireActor();
+        if (!actor.bootstrap() && !actor.hasRole("PLATFORM_OPERATOR")) {
+            throw new SecurityException("Platform operator role is required to create organizations");
+        }
         IdResponse response = returning("""
                         INSERT INTO organizations(name, jurisdiction, external_tenant_id)
                         VALUES (?, ?, ?)
@@ -150,10 +223,8 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public IdResponse registerUser(UserRegisterRequest request) {
-        AuthenticatedActor actor = actorOrNull();
-        if (actor != null && !actor.bootstrap() && !request.organizationId().equals(actor.organizationId())) {
-            throw new SecurityException("Cannot create users outside the actor organization");
-        }
+        AuthenticatedActor actor = requireActor();
+        requireOrgAccess(actor, request.organizationId());
         IdResponse response = returning("""
                         INSERT INTO users(organization_id, email, display_name)
                         VALUES (?, ?, ?)
@@ -215,6 +286,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void revokeDevice(UUID deviceId, String reason) {
+        requireBearerActor("Device revocation");
         UUID orgId = organizationForDevice(deviceId);
         requireDeviceActorOrOrgAdmin(deviceId, orgId);
         jdbc.update("UPDATE devices SET trust_state = 'REVOKED', revoked_at = now(), revoke_reason = ? WHERE id = ?", reason, deviceId);
@@ -225,6 +297,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void uploadIdentityKey(PublicKeyUploadRequest request) {
+        requireBearerActor("Identity key upload");
         UUID orgId = organizationForDevice(request.deviceId());
         requireDeviceActor(request.deviceId());
         byte[] publicKey = decodeBase64(request.publicKeyBase64(), "publicKeyBase64");
@@ -496,6 +569,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void recordReceipt(DeliveryReceiptRequest request) {
+        requireBearerActor("Delivery receipt");
         requireDeviceActor(request.deviceId());
         requireMessageVisibleToDevice(request.messageId(), request.deviceId());
         jdbc.update("""
@@ -598,7 +672,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public IdResponse createEncryptedAttachment(AttachmentCreateRequest request) {
-        AuthenticatedActor actor = requireActor();
+        AuthenticatedActor actor = requireBearerActor("Attachment upload");
         UUID orgId = organizationForRoom(request.roomId());
         requireOrgAccess(actor, orgId);
         assertNoPlaintext(request.cryptoMetadata());
@@ -640,7 +714,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                     }
                     UUID organizationId = rs.getObject("organization_id", UUID.class);
                     UUID roomId = rs.getObject("room_id", UUID.class);
-                    AuthenticatedActor actor = requireActor();
+                    AuthenticatedActor actor = requireBearerActor("Attachment download");
                     requireOrgAccess(actor, organizationId);
                     requireRoomMember(actor, roomId);
                     Instant expiresAt = Instant.now().plus(5, ChronoUnit.MINUTES);
@@ -685,7 +759,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void exportAudit(AuditExportRequest request) {
-        requireOrgAccess(requireActor(), request.organizationId());
+        requireOrgAccess(requireBearerActor("Audit export"), request.organizationId());
         if (request.from() != null && request.to() != null && request.from().isAfter(request.to())) {
             throw new IllegalArgumentException("Audit export from must be before to");
         }
@@ -740,7 +814,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void recordSignedAction(String signedAdminActionEnvelope) {
-        AuthenticatedActor actor = requireActor();
+        AuthenticatedActor actor = requireBearerActor("Signed admin action");
         Map<String, Object> payload = fromJson(signedAdminActionEnvelope);
         UUID orgId = payload.containsKey("organizationId") ? UUID.fromString(String.valueOf(payload.get("organizationId"))) : actor.organizationId();
         requireOrgAccess(actor, orgId);
@@ -759,8 +833,50 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     }
 
     @Override
+    public Map<String, Object> transparencyMonitor(UUID organizationId) {
+        requireOrgAccess(requireBearerActor("Transparency monitor"), organizationId);
+        return jdbc.query("""
+                        SELECT count(*) AS entry_count, max(log_index) AS latest_index, max(created_at) AS latest_entry_at
+                        FROM key_transparency_entries
+                        WHERE organization_id = ?
+                        """,
+                rs -> {
+                    if (!rs.next()) {
+                        return Map.of("entryCount", 0, "latestLogIndex", -1);
+                    }
+                    return Map.of(
+                            "entryCount", rs.getLong("entry_count"),
+                            "latestLogIndex", rs.getObject("latest_index") == null ? -1 : rs.getLong("latest_index"),
+                            "latestEntryAt", rs.getTimestamp("latest_entry_at") == null ? "" : rs.getTimestamp("latest_entry_at").toInstant().toString(),
+                            "verifierMode", securityVerifierClient.remoteEnabled() ? "remote" : "local-fallback");
+                },
+                organizationId);
+    }
+
+    @Override
+    public SecurityVerifierClient.AuditVerificationResponse verifyAuditChain(UUID organizationId) {
+        requireOrgAccess(requireBearerActor("Audit chain verification"), organizationId);
+        return jdbc.query("""
+                        SELECT count(*) AS event_count, max(event_hash) AS latest_event_hash
+                        FROM audit_events
+                        WHERE organization_id = ?
+                        """,
+                rs -> {
+                    if (!rs.next()) {
+                        return new SecurityVerifierClient.AuditVerificationResponse(true, 0, "empty");
+                    }
+                    byte[] latest = rs.getBytes("latest_event_hash");
+                    return securityVerifierClient.verifyAuditChain(new SecurityVerifierClient.AuditVerificationRequest(
+                            organizationId,
+                            rs.getInt("event_count"),
+                            latest == null ? "" : Base64.getEncoder().encodeToString(latest)));
+                },
+                organizationId);
+    }
+
+    @Override
     public void syncDevicePosture(UUID organizationId) {
-        requireOrgAccess(requireActor(), organizationId);
+        requireOrgAccess(requireBearerActor("MDM sync"), organizationId);
         int compliant = jdbc.update("""
                         UPDATE devices d
                         SET mdm_compliant = true,
@@ -800,7 +916,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
             throw new IllegalArgumentException("normalizedAuditEventJson requires organizationId");
         }
         UUID organizationId = UUID.fromString(String.valueOf(organization));
-        requireOrgAccess(requireActor(), organizationId);
+        requireOrgAccess(requireBearerActor("SIEM export"), organizationId);
         UUID exportId = upsertSiemExport(organizationId, String.valueOf(normalizedEvent.getOrDefault("sinkType", "INLINE")));
         jdbc.update("""
                         INSERT INTO siem_export_events(siem_export_id, normalized_event, status)
@@ -813,7 +929,11 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void startLockdown(EmergencyLockdownRequest request) {
-        AuthenticatedActor actor = requireActor();
+        AuthenticatedActor actor = requireBearerActor("Emergency lockdown");
+        requireOrgAccess(actor, request.organizationId());
+        if (request.roomId() != null && !request.organizationId().equals(organizationForRoom(request.roomId()))) {
+            throw new SecurityException("Lockdown room must belong to the requested organization");
+        }
         UUID startedBy = actor.userId();
         if (startedBy == null) {
             startedBy = firstUserInOrg(request.organizationId());
@@ -832,7 +952,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void endLockdown(UUID lockdownId, String reason) {
-        AuthenticatedActor actor = requireActor();
+        AuthenticatedActor actor = requireBearerActor("Emergency lockdown");
         UUID orgId = jdbc.query("SELECT organization_id FROM emergency_lockdowns WHERE id = ?",
                 rs -> {
                     if (!rs.next()) {
@@ -841,6 +961,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                     return rs.getObject("organization_id", UUID.class);
                 },
                 lockdownId);
+        requireOrgAccess(actor, orgId);
         jdbc.update("UPDATE emergency_lockdowns SET ended_by = ?, ended_at = now() WHERE id = ?", actor.userId(), lockdownId);
         jdbc.update("""
                         UPDATE rooms SET lockdown_state = 'NORMAL'
@@ -852,40 +973,30 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         appendSecurityEvent(orgId, actor.userId(), actor.deviceId(), "LOCKDOWN_ENDED", Map.of("lockdownId", lockdownId.toString(), "reason", reason));
     }
 
-    private WebAuthnStartResponse startWebAuthn(UUID userId, String ceremonyType) {
-        String challenge = tokenService.newChallenge();
+    private WebAuthnStartResponse storeWebAuthnChallenge(UUID userId, String ceremonyType, String challenge, Map<String, Object> options) {
         Instant expiresAt = Instant.now().plus(5, ChronoUnit.MINUTES);
         jdbc.update("""
-                        INSERT INTO webauthn_challenges(user_id, ceremony_type, challenge_hash, public_challenge, expires_at)
-                        VALUES (?, ?, ?, ?, ?)
+                        INSERT INTO webauthn_challenges(user_id, ceremony_type, challenge_hash, public_challenge, request_options_json, expires_at)
+                        VALUES (?, ?, ?, ?, ?::jsonb, ?)
                         """,
-                userId, ceremonyType, tokenService.sha256(challenge), challenge, Timestamp.from(expiresAt));
-        Map<String, Object> options = new LinkedHashMap<>();
-        options.put("challenge", challenge);
-        options.put("rp", Map.of("id", webauthnRpId, "name", webauthnRpName));
-        options.put("allowedOrigins", Arrays.stream(allowedOrigins.split(",")).map(String::trim).filter(s -> !s.isBlank()).toList());
-        options.put("user", Map.of("id", userId.toString()));
-        options.put("timeout", 300000);
-        options.put("userVerification", "required");
-        options.put("attestation", "direct");
-        options.put("demoOnly", true);
-        options.put("verificationMode", "challenge_replay_protected_until_yubico_finish_verification_is_wired");
+                userId, ceremonyType, tokenService.sha256(challenge), challenge, toJson(options), Timestamp.from(expiresAt));
         return new WebAuthnStartResponse(challenge, options);
     }
 
-    private String consumeChallenge(UUID userId, String ceremonyType) {
-        String challenge = jdbc.query("""
-                        SELECT public_challenge
+    private WebAuthnChallenge consumeChallenge(UUID userId, String ceremonyType) {
+        WebAuthnChallenge challenge = jdbc.query("""
+                        SELECT public_challenge, request_options_json::text
                         FROM webauthn_challenges
                         WHERE user_id = ?
                           AND ceremony_type = ?
                           AND consumed_at IS NULL
                           AND expires_at > now()
+                          AND request_options_json IS NOT NULL
                         ORDER BY created_at DESC
                         LIMIT 1
                         FOR UPDATE
                         """,
-                rs -> rs.next() ? rs.getString("public_challenge") : null,
+                rs -> rs.next() ? new WebAuthnChallenge(rs.getString("public_challenge"), rs.getString("request_options_json")) : null,
                 userId, ceremonyType);
         if (challenge == null) {
             throw new SecurityException("No active WebAuthn challenge or challenge already consumed");
@@ -898,11 +1009,87 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                           AND public_challenge = ?
                           AND consumed_at IS NULL
                         """,
-                userId, ceremonyType, challenge);
+                userId, ceremonyType, challenge.publicChallenge());
         if (updated != 1) {
             throw new SecurityException("WebAuthn challenge was already consumed");
         }
         return challenge;
+    }
+
+    private RelyingParty relyingParty() {
+        return RelyingParty.builder()
+                .identity(RelyingPartyIdentity.builder()
+                        .id(webauthnRpId)
+                        .name(webauthnRpName)
+                        .build())
+                .credentialRepository(new JdbcCredentialRepository())
+                .origins(allowedOriginSet())
+                .attestationConveyancePreference(AttestationConveyancePreference.DIRECT)
+                .allowUntrustedAttestation(true)
+                .validateSignatureCounter(true)
+                .build();
+    }
+
+    private Set<String> allowedOriginSet() {
+        Set<String> origins = new LinkedHashSet<>();
+        Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .forEach(origins::add);
+        if (origins.isEmpty()) {
+            origins.add("http://localhost:8080");
+        }
+        return origins;
+    }
+
+    private UserIdentity userIdentity(UUID userId) {
+        Map<String, Object> user = jdbc.query("""
+                        SELECT email::text AS email, display_name
+                        FROM users
+                        WHERE id = ?
+                        """,
+                rs -> {
+                    if (!rs.next()) {
+                        throw new NoSuchElementException("User not found");
+                    }
+                    return Map.of("email", rs.getString("email"), "displayName", rs.getString("display_name"));
+                },
+                userId);
+        return UserIdentity.builder()
+                .name(String.valueOf(user.get("email")))
+                .displayName(String.valueOf(user.get("displayName")))
+                .id(userHandle(userId))
+                .build();
+    }
+
+    private ByteArray userHandle(UUID userId) {
+        return new ByteArray(userId.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private Map<String, Object> toYubicoMap(Object value) {
+        try {
+            String json;
+            if (value instanceof PublicKeyCredentialCreationOptions options) {
+                json = options.toJson();
+            } else if (value instanceof AssertionRequest request) {
+                json = request.toJson();
+            } else {
+                json = objectMapper.writeValueAsString(value);
+            }
+            return objectMapper.readValue(json, MAP_TYPE);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("WebAuthn options cannot be serialized", e);
+        }
+    }
+
+    private void requireWebAuthnRegistrationActor(UUID userId) {
+        AuthenticatedActor actor = requireActor();
+        UUID orgId = organizationForUser(userId);
+        requireOrgAccess(actor, orgId);
+        if (actor.bootstrap() || actor.userId().equals(userId) || hasOrgAdminRole(actor)) {
+            return;
+        }
+        throw new SecurityException("Passkey registration requires bootstrap, same-user session, or org-admin role");
     }
 
     private SessionResponse issueSession(UUID userId, UUID deviceId) {
@@ -930,7 +1117,108 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         return new SessionResponse(userId, deviceId, token, expiresAt);
     }
 
+    private final class JdbcCredentialRepository implements CredentialRepository {
+        @Override
+        public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username) {
+            UUID userId = parseUserHandle(username);
+            return jdbc.query("""
+                            SELECT credential_id
+                            FROM webauthn_credentials
+                            WHERE user_id = ?
+                              AND verification_status = 'VERIFIED'
+                            """,
+                    (rs, rowNum) -> PublicKeyCredentialDescriptor.builder()
+                            .id(new ByteArray(rs.getBytes("credential_id")))
+                            .type(PublicKeyCredentialType.PUBLIC_KEY)
+                            .build(),
+                    userId).stream().collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        }
+
+        @Override
+        public Optional<ByteArray> getUserHandleForUsername(String username) {
+            UUID userId = parseUserHandle(username);
+            requireUserExists(userId);
+            return Optional.of(userHandle(userId));
+        }
+
+        @Override
+        public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
+            UUID userId = parseUserHandle(new String(userHandle.getBytes(), StandardCharsets.UTF_8));
+            requireUserExists(userId);
+            return Optional.of(userId.toString());
+        }
+
+        @Override
+        public Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle) {
+            UUID userId = parseUserHandle(new String(userHandle.getBytes(), StandardCharsets.UTF_8));
+            return credential(credentialId, userId);
+        }
+
+        @Override
+        public Set<RegisteredCredential> lookupAll(ByteArray credentialId) {
+            return jdbc.query("""
+                            SELECT credential_id, user_id, public_key_cose, signature_count, backup_eligible, backup_state
+                            FROM webauthn_credentials
+                            WHERE credential_id = ?
+                              AND verification_status = 'VERIFIED'
+                            """,
+                    (rs, rowNum) -> registeredCredential(rs.getBytes("credential_id"),
+                            rs.getObject("user_id", UUID.class),
+                            rs.getBytes("public_key_cose"),
+                            rs.getLong("signature_count"),
+                            rs.getBoolean("backup_eligible"),
+                            rs.getBoolean("backup_state")),
+                    credentialId.getBytes()).stream().collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        }
+
+        private Optional<RegisteredCredential> credential(ByteArray credentialId, UUID userId) {
+            return jdbc.query("""
+                            SELECT credential_id, user_id, public_key_cose, signature_count, backup_eligible, backup_state
+                            FROM webauthn_credentials
+                            WHERE credential_id = ?
+                              AND user_id = ?
+                              AND verification_status = 'VERIFIED'
+                            """,
+                    rs -> {
+                        if (!rs.next()) {
+                            return Optional.empty();
+                        }
+                        return Optional.of(registeredCredential(rs.getBytes("credential_id"),
+                                rs.getObject("user_id", UUID.class),
+                                rs.getBytes("public_key_cose"),
+                                rs.getLong("signature_count"),
+                                rs.getBoolean("backup_eligible"),
+                                rs.getBoolean("backup_state")));
+                    },
+                    credentialId.getBytes(), userId);
+        }
+
+        private RegisteredCredential registeredCredential(byte[] credentialId, UUID userId, byte[] publicKeyCose,
+                                                          long signatureCount, boolean backupEligible, boolean backupState) {
+            return RegisteredCredential.builder()
+                    .credentialId(new ByteArray(credentialId))
+                    .userHandle(userHandle(userId))
+                    .publicKeyCose(new ByteArray(publicKeyCose))
+                    .signatureCount(signatureCount)
+                    .backupEligible(backupEligible)
+                    .backupState(backupState)
+                    .build();
+        }
+
+        private UUID parseUserHandle(String value) {
+            try {
+                return UUID.fromString(value);
+            } catch (RuntimeException e) {
+                throw new SecurityException("Invalid WebAuthn user handle", e);
+            }
+        }
+    }
+
+    private record WebAuthnChallenge(String publicChallenge, String requestOptionsJson) {
+    }
+
     private void uploadPrekey(String table, PreKeyUploadRequest request, boolean requiresSignature, boolean hasExpiry) {
+        requireBearerActor("Prekey upload");
         organizationForDevice(request.deviceId());
         requireDeviceActor(request.deviceId());
         byte[] publicKey = decodeBase64(request.publicKeyBase64(), "publicKeyBase64");
@@ -1068,7 +1356,10 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         AuthenticatedActor actor = requireActor();
         UUID orgId = organizationForDevice(deviceId);
         requireOrgAccess(actor, orgId);
-        if (!actor.bootstrap() && !deviceId.equals(actor.deviceId())) {
+        if (actor.bootstrap()) {
+            throw new SecurityException("Bearer session is required for device-scoped operations");
+        }
+        if (!deviceId.equals(actor.deviceId())) {
             throw new SecurityException("Device-scoped operation must match authenticated session");
         }
     }
@@ -1076,7 +1367,10 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     private void requireDeviceActorOrOrgAdmin(UUID deviceId, UUID orgId) {
         AuthenticatedActor actor = requireActor();
         requireOrgAccess(actor, orgId);
-        if (actor.bootstrap() || hasOrgAdminRole(actor) || deviceId.equals(actor.deviceId())) {
+        if (actor.bootstrap()) {
+            throw new SecurityException("Bearer session is required for device administration");
+        }
+        if (hasOrgAdminRole(actor) || deviceId.equals(actor.deviceId())) {
             return;
         }
         throw new SecurityException("Device owner or admin role is required");
@@ -1107,7 +1401,10 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     }
 
     private void requireRoomMember(AuthenticatedActor actor, UUID roomId) {
-        if (roomId == null || actor.bootstrap() || hasOrgAdminRole(actor)) {
+        if (actor.bootstrap()) {
+            throw new SecurityException("Bearer session is required for room access");
+        }
+        if (roomId == null || hasOrgAdminRole(actor)) {
             return;
         }
         Integer member = jdbc.queryForObject("""
@@ -1246,6 +1543,14 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         return actor;
     }
 
+    private AuthenticatedActor requireBearerActor(String operation) {
+        AuthenticatedActor actor = requireActor();
+        if (actor.bootstrap()) {
+            throw new SecurityException(operation + " requires a bearer session");
+        }
+        return actor;
+    }
+
     private AuthenticatedActor actorOrNull() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof AuthenticatedActor actor)) {
@@ -1284,14 +1589,6 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         }
     }
 
-    private byte[] decodeBase64Url(String value, String fieldName) {
-        try {
-            return Base64.getUrlDecoder().decode(value);
-        } catch (IllegalArgumentException e) {
-            return decodeBase64(value, fieldName);
-        }
-    }
-
     private byte[] decodeFlexibleHash(String value, String fieldName) {
         byte[] decoded;
         if (value.matches("(?i)[0-9a-f]{64}")) {
@@ -1326,50 +1623,6 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid JSON payload", e);
         }
-    }
-
-    private Map<String, Object> parseWebAuthnCredential(String credentialJson, String expectedType, String expectedChallenge) {
-        Map<String, Object> credential = fromJson(credentialJson);
-        Map<String, Object> response = nestedMap(credential, "response");
-        Map<String, Object> clientData = fromJson(new String(
-                decodeBase64Url(requiredString(response, "clientDataJSON"), "clientDataJSON"),
-                StandardCharsets.UTF_8));
-        if (!expectedType.equals(clientData.get("type"))) {
-            throw new SecurityException("Unexpected WebAuthn ceremony type");
-        }
-        if (!expectedChallenge.equals(clientData.get("challenge"))) {
-            throw new SecurityException("WebAuthn challenge mismatch");
-        }
-        String origin = String.valueOf(clientData.get("origin"));
-        boolean originAllowed = Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isBlank())
-                .anyMatch(origin::equals);
-        if (!originAllowed) {
-            throw new SecurityException("WebAuthn origin is not allowed");
-        }
-        if (Boolean.TRUE.equals(clientData.get("crossOrigin"))) {
-            throw new SecurityException("Cross-origin WebAuthn assertions are not accepted");
-        }
-        return credential;
-    }
-
-    private Map<String, Object> nestedMap(Map<String, Object> value, String field) {
-        Object nested = value.get(field);
-        if (!(nested instanceof Map<?, ?> raw)) {
-            throw new IllegalArgumentException(field + " is required");
-        }
-        Map<String, Object> mapped = new LinkedHashMap<>();
-        raw.forEach((k, v) -> mapped.put(String.valueOf(k), v));
-        return mapped;
-    }
-
-    private String requiredString(Map<String, Object> value, String field) {
-        Object raw = value.get(field);
-        if (!(raw instanceof String text) || text.isBlank()) {
-            throw new IllegalArgumentException(field + " is required");
-        }
-        return text;
     }
 
     private byte[] concat(byte[]... values) {

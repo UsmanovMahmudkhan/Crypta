@@ -77,7 +77,8 @@ class BackendFlowIntegrationTest {
                 bootstrapHeaders,
                 Map.class));
         UUID senderUserId = idFrom(post("/api/v1/users",
-                Map.of("organizationId", organizationId.toString(), "email", "sender@example.com", "displayName", "Sender"),
+                Map.of("organizationId", organizationId.toString(), "email", "sender@example.com", "displayName", "Sender",
+                        "roles", List.of("ORG_ADMIN")),
                 bootstrapHeaders,
                 Map.class));
         UUID recipientUserId = idFrom(post("/api/v1/users",
@@ -92,27 +93,31 @@ class BackendFlowIntegrationTest {
                 Map.class));
         UUID outsiderDeviceId = createDevice(outsiderUserId, "Outsider Laptop", bootstrapHeaders);
 
-        String registrationChallenge = webauthnChallenge("/api/v1/webauthn/registration/options/" + senderUserId);
-        ResponseEntity<Map> registration = post("/api/v1/webauthn/registration/finish",
-                Map.of("userId", senderUserId.toString(), "deviceId", senderDeviceId.toString(),
-                        "credentialJson", webauthnCredentialJson("webauthn.create", registrationChallenge, "http://localhost", "sender-passkey")),
+        ResponseEntity<Map> unauthenticatedRegistrationOptions = post("/api/v1/webauthn/registration/options/" + senderUserId,
+                Map.of(),
                 new HttpHeaders(),
                 Map.class);
-        assertThat(registration.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(unauthenticatedRegistrationOptions.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        String registrationChallenge = webauthnChallenge("/api/v1/webauthn/registration/options/" + senderUserId, bootstrapHeaders);
+        ResponseEntity<Map> demoRegistration = post("/api/v1/webauthn/registration/finish",
+                Map.of("userId", senderUserId.toString(), "deviceId", senderDeviceId.toString(),
+                        "credentialJson", webauthnCredentialJson("webauthn.create", registrationChallenge, "http://localhost", "sender-passkey")),
+                bootstrapHeaders,
+                Map.class);
+        assertThat(demoRegistration.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         ResponseEntity<Map> replay = post("/api/v1/webauthn/registration/finish",
                 Map.of("userId", senderUserId.toString(), "deviceId", senderDeviceId.toString(),
                         "credentialJson", webauthnCredentialJson("webauthn.create", registrationChallenge, "http://localhost", "sender-passkey")),
-                new HttpHeaders(),
+                bootstrapHeaders,
                 Map.class);
         assertThat(replay.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 
-        String loginChallenge = webauthnChallenge("/api/v1/webauthn/login/options/" + senderUserId);
-        ResponseEntity<Map> wrongOriginLogin = post("/api/v1/webauthn/login/finish",
-                Map.of("userId", senderUserId.toString(), "deviceId", senderDeviceId.toString(),
-                        "credentialJson", webauthnCredentialJson("webauthn.get", loginChallenge, "https://evil.example", "sender-passkey")),
+        ResponseEntity<Map> legacyDemoLoginOptions = post("/api/v1/webauthn/login/options/" + senderUserId,
+                Map.of(),
                 new HttpHeaders(),
                 Map.class);
-        assertThat(wrongOriginLogin.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(legacyDemoLoginOptions.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 
         String senderToken = sessionToken(senderUserId, senderDeviceId, bootstrapHeaders);
         String recipientToken = sessionToken(recipientUserId, recipientDeviceId, bootstrapHeaders);
@@ -122,6 +127,38 @@ class BackendFlowIntegrationTest {
                 tokenService.sha256(senderToken))).isEqualTo(1);
 
         HttpHeaders senderHeaders = bearerHeaders(senderToken);
+        ResponseEntity<Map> bootstrapAdminDenied = rest.exchange(url("/api/v1/admin/security/verifier"),
+                HttpMethod.GET,
+                new HttpEntity<>(bootstrapHeaders),
+                Map.class);
+        assertThat(bootstrapAdminDenied.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        ResponseEntity<Map> bootstrapGovernanceDenied = post("/api/v1/governance/cql/parse",
+                "SELECT * FROM DEVICES",
+                bootstrapHeaders,
+                Map.class);
+        assertThat(bootstrapGovernanceDenied.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        ResponseEntity<Map> bootstrapKeyDenied = post("/api/v1/keys/identity",
+                Map.of("deviceId", senderDeviceId.toString(), "algorithm", "TEST",
+                        "publicKeyBase64", base64("public-key"), "signatureBase64", base64("signature")),
+                bootstrapHeaders,
+                Map.class);
+        assertThat(bootstrapKeyDenied.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        ResponseEntity<Map> bootstrapRoomDenied = post("/api/v1/mission-rooms",
+                Map.of("organizationId", organizationId.toString(), "name", "Denied Room", "classification", "SECRET"),
+                bootstrapHeaders,
+                Map.class);
+        assertThat(bootstrapRoomDenied.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        ResponseEntity<Map> bootstrapMessageDenied = post("/api/v1/messages/direct",
+                directMessage(organizationId, senderUserId, senderDeviceId, recipientUserId, recipientDeviceId, Map.of("algorithm", "XChaCha20-Poly1305")),
+                bootstrapHeaders,
+                Map.class);
+        assertThat(bootstrapMessageDenied.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        ResponseEntity<Map> bootstrapDeviceRevokeDenied = rest.exchange(url("/api/v1/devices/" + senderDeviceId),
+                HttpMethod.DELETE,
+                new HttpEntity<>(bootstrapHeaders),
+                Map.class);
+        assertThat(bootstrapDeviceRevokeDenied.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
         UUID messageId = idFrom(post("/api/v1/messages/direct",
                 directMessage(organizationId, senderUserId, senderDeviceId, recipientUserId, recipientDeviceId, Map.of("algorithm", "XChaCha20-Poly1305")),
                 senderHeaders,
@@ -210,14 +247,14 @@ class BackendFlowIntegrationTest {
                 recipientDeviceId,
                 recipientDeviceId.toString(),
                 "{\"hardwareBacked\":true,\"secureEnclave\":true}");
-        ResponseEntity<Map> mdmSync = post("/api/v1/admin/mdm/sync/" + organizationId, Map.of(), bootstrapHeaders, Map.class);
+        ResponseEntity<Map> mdmSync = post("/api/v1/admin/mdm/sync/" + organizationId, Map.of(), senderHeaders, Map.class);
         assertThat(mdmSync.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(jdbc.queryForObject("SELECT trust_state FROM devices WHERE id = ?", String.class, recipientDeviceId)).isEqualTo("VERIFIED");
         assertThat(jdbc.queryForObject("SELECT mdm_compliant FROM devices WHERE id = ?", Boolean.class, recipientDeviceId)).isTrue();
 
         ResponseEntity<Map> auditExport = post("/api/v1/admin/audit/export",
                 Map.of("organizationId", organizationId.toString(), "sinkType", "DATABASE_BUFFER"),
-                bootstrapHeaders,
+                senderHeaders,
                 Map.class);
         assertThat(auditExport.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM siem_export_events", Integer.class)).isPositive();
@@ -226,7 +263,7 @@ class BackendFlowIntegrationTest {
                 """
                         {"organizationId":"%s","sinkType":"INLINE","eventType":"CONTROL_CHECK","metadata":{"result":"pass"}}
                         """.formatted(organizationId),
-                bootstrapHeaders,
+                senderHeaders,
                 Map.class);
         assertThat(inlineExport.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
@@ -253,8 +290,8 @@ class BackendFlowIntegrationTest {
         return (String) response.getBody().get("token");
     }
 
-    private String webauthnChallenge(String path) {
-        ResponseEntity<Map> response = post(path, Map.of(), new HttpHeaders(), Map.class);
+    private String webauthnChallenge(String path, HttpHeaders headers) {
+        ResponseEntity<Map> response = post(path, Map.of(), headers, Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         return (String) response.getBody().get("challengeBase64");
     }

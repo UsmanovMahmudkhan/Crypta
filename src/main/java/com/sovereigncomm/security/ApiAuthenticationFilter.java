@@ -60,7 +60,7 @@ public class ApiAuthenticationFilter extends OncePerRequestFilter {
                 supplied.getBytes(StandardCharsets.UTF_8))) {
             return;
         }
-        AuthenticatedActor actor = new AuthenticatedActor(null, null, null, Set.of("PLATFORM_OPERATOR"), true);
+        AuthenticatedActor actor = new AuthenticatedActor(null, null, null, Set.of("BOOTSTRAP"), true);
         SecurityContextHolder.getContext().setAuthentication(authentication(actor));
     }
 

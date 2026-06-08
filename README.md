@@ -29,7 +29,15 @@ For a direct Maven run against the Compose database, export `DATABASE_URL`, `DAT
 mvn spring-boot:run
 ```
 
-Provision organizations, users, and devices with `X-Bootstrap-Token`, then exchange a bootstrapped `userId` and `deviceId` at `POST /api/v1/bootstrap/sessions` for a bearer token. WebAuthn challenge creation and finish endpoints validate challenge/origin/replay state, but full audited authenticator signature verification remains a production-readiness item.
+Provision organizations, users, and devices with `X-Bootstrap-Token`, then exchange a bootstrapped `userId` and `deviceId` at `POST /api/v1/bootstrap/sessions` for a bearer token. The bootstrap token is an onboarding credential only; admin, governance, key, room, message, attachment, and device-revocation paths require bearer sessions. WebAuthn/passkey registration and login use persisted Yubico ceremony options and verified credentials, while external WebAuthn review and production attestation policy remain production-readiness items.
+
+Backend tests can be run with:
+
+```bash
+mvn test
+```
+
+The full `BackendFlowIntegrationTest` uses Testcontainers and runs when Docker is available; without Docker it is skipped by design while unit and service-level hardening tests still run.
 
 ## Documentation
 
@@ -99,7 +107,7 @@ flowchart TD
 
 ### User Authentication & Sessions
 
-The project includes WebAuthn/passkey challenge scaffolding, bootstrap session issuance, and random bearer tokens stored as SHA-256 hashes. WebAuthn credential finish verification is not yet configured.
+The project includes bootstrap onboarding, Yubico-backed WebAuthn/passkey ceremony verification, persisted WebAuthn request options, verified credential storage, and random bearer tokens stored as hashes. Legacy demo credentials are marked separately and excluded from login. Bootstrap is limited to onboarding; normal administration and application use require bearer sessions.
 
 Implemented with:
 
@@ -109,6 +117,7 @@ Implemented with:
 * [ApiAuthenticationFilter](src/main/java/com/sovereigncomm/security/ApiAuthenticationFilter.java)
 * [webauthn_credentials](src/main/resources/db/migration/V1__initial_secure_comm_schema.sql)
 * [webauthn_challenges](src/main/resources/db/migration/V2__production_security_runtime.sql)
+* [webauthn_verification_boundary](src/main/resources/db/migration/V5__webauthn_verification_boundary.sql)
 * [api_sessions](src/main/resources/db/migration/V2__production_security_runtime.sql)
 
 ### Zero-Trust Message Ingestion
@@ -124,7 +133,7 @@ Implemented with:
 
 ### Plaintext Prevention Guard
 
-The project uses strict validation logic to reject JSON metadata payloads containing any keys matching patterns for plaintext, body content, or decrypted parameters.
+The project uses strict validation logic to reject JSON metadata payloads containing any keys matching patterns for plaintext, body content, or decrypted parameters, including forbidden keys nested inside maps, lists, and arrays.
 
 Implemented with:
 
@@ -219,15 +228,15 @@ Implemented with:
 
 The platform integrates a dynamic governance plane for real-time compliance auditing and rule-based policy enforcement:
 
-* **Compliance Query Language (CQL)**: An ANTLR4-parsed, SQL-inspired language designed specifically for secure querying of `AUDIT_EVENTS`, `DEVICES`, and `ROOMS`.
+* **Compliance Query Language (CQL)**: An ANTLR4-parsed, SQL-inspired language designed specifically for bearer-admin querying of `AUDIT_EVENTS`, `DEVICES`, and `ROOMS`. Execution is organization-scoped, table/column allowlisted, parameterized, length-limited, and result-capped.
   * Grammar: [CQL.g4](src/main/antlr4/com/sovereigncomm/cql/CQL.g4)
   * Compiler / Service: [CqlPolicyService](src/main/java/com/sovereigncomm/cql/CqlPolicyService.java)
   * Example Query: `SELECT id, event_type FROM AUDIT_EVENTS WHERE event_type = 'AUDIT_EXPORT_REQUESTED'`
-* **Smalltalk Policy Engine**: A highly flexible, lightweight Smalltalk message-passing engine embedded within the Java policy layer to evaluate compliance rules with block evaluations (`[ :param | ... ]`).
+* **Smalltalk Policy Engine**: A highly flexible, lightweight Smalltalk message-passing engine embedded within the Java policy layer to evaluate compliance rules with block evaluations (`[ :param | ... ]`). It is disabled by default and scans input and returned structures for plaintext-shaped metadata.
   * Engine: [SmalltalkEngine](src/main/java/com/sovereigncomm/smalltalk/SmalltalkEngine.java)
   * Service: [SmalltalkService](src/main/java/com/sovereigncomm/smalltalk/SmalltalkService.java)
   * Example Script: `[ :device | device platform = 'iOS' ]`
 * **Governance REST Endpoints**:
   * `POST /api/v1/governance/cql/parse` - Parse CQL query string to abstract AST representation.
-  * `POST /api/v1/governance/cql/execute` - Execute secure CQL query against database audit tables.
+  * `POST /api/v1/governance/cql/execute` - Execute an organization-scoped CQL query against approved governance tables.
   * `POST /api/v1/governance/smalltalk/evaluate` - Evaluate Smalltalk block against target object contexts dynamically.

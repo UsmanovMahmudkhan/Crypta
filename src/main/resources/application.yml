@@ -28,6 +28,9 @@ app:
       enabled: ${RATE_LIMIT_ENABLED:true}
       requests-per-minute: ${RATE_LIMIT_REQUESTS_PER_MINUTE:600}
   governance:
+    cql:
+      max-query-chars: ${CQL_MAX_QUERY_CHARS:2000}
+      max-results: ${CQL_MAX_RESULTS:100}
     smalltalk:
       enabled: ${SMALLTALK_GOVERNANCE_ENABLED:false}
       max-script-chars: ${SMALLTALK_MAX_SCRIPT_CHARS:2000}

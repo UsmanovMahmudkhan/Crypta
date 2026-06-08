@@ -2,6 +2,8 @@ package com.sovereigncomm.cql;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -15,14 +17,28 @@ public class CqlPolicyService {
             "rooms", Set.of("id", "organization_id", "name", "classification", "room_type", "lockdown_state", "created_at", "updated_at"));
 
     private final JdbcTemplate jdbcTemplate;
+    private final int maxQueryChars;
+    private final int maxResults;
 
     public CqlPolicyService(JdbcTemplate jdbcTemplate) {
+        this(jdbcTemplate, 2000, 100);
+    }
+
+    @Autowired
+    public CqlPolicyService(JdbcTemplate jdbcTemplate,
+                            @Value("${app.governance.cql.max-query-chars:2000}") int maxQueryChars,
+                            @Value("${app.governance.cql.max-results:100}") int maxResults) {
         this.jdbcTemplate = jdbcTemplate;
+        this.maxQueryChars = Math.max(1, maxQueryChars);
+        this.maxResults = Math.max(1, Math.min(maxResults, 1000));
     }
 
     public CqlQuery parse(String cql) {
         if (cql == null || cql.trim().isEmpty()) {
             throw new IllegalArgumentException("CQL query cannot be empty");
+        }
+        if (cql.length() > maxQueryChars) {
+            throw new IllegalArgumentException("CQL query exceeds configured length limit");
         }
 
         try {
@@ -58,7 +74,10 @@ public class CqlPolicyService {
         }
     }
 
-    public List<Map<String, Object>> execute(String cql) {
+    public List<Map<String, Object>> execute(String cql, UUID organizationId) {
+        if (organizationId == null) {
+            throw new IllegalArgumentException("CQL execution requires an organization scope");
+        }
         CqlQuery query = parse(cql);
         
         String tableName;
@@ -94,7 +113,8 @@ public class CqlPolicyService {
         sql.append(" FROM ").append(tableName);
 
         List<Object> params = new ArrayList<>();
-        if (query.getFilterField() != null) {
+        boolean hasFilter = query.getFilterField() != null;
+        if (hasFilter) {
             sql.append(" WHERE ").append(sanitizeColumnName(tableName, query.getFilterField()));
             
             String op = query.getFilterOperator().toUpperCase();
@@ -113,6 +133,11 @@ public class CqlPolicyService {
                 throw new IllegalArgumentException("Unsupported CQL operator: " + op);
             }
         }
+
+        sql.append(hasFilter ? " AND " : " WHERE ").append("organization_id = ?");
+        params.add(organizationId);
+        sql.append(" LIMIT ?");
+        params.add(maxResults);
 
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
