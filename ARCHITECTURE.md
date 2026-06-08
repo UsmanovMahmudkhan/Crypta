@@ -67,7 +67,7 @@ sequenceDiagram
     API->>DB: Validate token hash, expiry, revocation
 ```
 
-WebAuthn/passkey challenge endpoints exist, but finish verification currently fails closed until real passkey verification is configured.
+Bootstrap authentication is an onboarding-only path for initial tenant, user, device, and bootstrap session creation. Admin, governance, key, room, message, attachment, and device-revocation flows require bearer sessions. WebAuthn/passkey registration and login use persisted Yubico ceremony options and store only verified credentials for login; legacy demo credentials are excluded.
 
 ## Message Envelope Flow
 
@@ -129,8 +129,8 @@ Download responses return metadata-only signed grants with object key, ciphertex
 
 The governance layer includes:
 
-- CQL parsing and execution against approved governance data.
-- Smalltalk-style rule evaluation for policy experiments, disabled by default unless explicitly enabled for a runtime profile.
+- CQL parsing and organization-scoped execution against approved governance data with table/column allowlists and result caps.
+- Smalltalk-style rule evaluation for policy experiments, disabled by default unless explicitly enabled for a runtime profile, with recursive plaintext-shaped input/output checks.
 - Room policy versioning.
 - Admin action recording.
 - Emergency lockdown records.
