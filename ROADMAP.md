@@ -25,7 +25,7 @@ The repository contains a Spring Boot backend scaffold, PostgreSQL migrations, a
 
 ## Short-Term Goals
 
-- Complete audited WebAuthn signature verification using persisted Yubico ceremony options and authenticator data validation.
+- Expand audited WebAuthn/passkey regression coverage around persisted Yubico ceremony options, authenticator data validation, and legacy-demo credential rejection.
 - Add endpoint-level integration tests for every controller.
 - Tighten authorization checks for room membership, device trust, admin actions, and governance routes.
 - Expand plaintext rejection tests for messages, attachments, policy metadata, logs, and error handling.
@@ -55,7 +55,7 @@ The repository contains a Spring Boot backend scaffold, PostgreSQL migrations, a
 ## Not Yet Implemented
 
 - Independent cryptographic audit.
-- Complete WebAuthn/passkey finish verification.
+- External WebAuthn/passkey implementation review.
 - Full native mobile secure-key storage.
 - Real encrypted group messaging verification.
 - Production object storage integration for encrypted attachments.
