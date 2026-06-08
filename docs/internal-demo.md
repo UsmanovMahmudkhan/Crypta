@@ -23,7 +23,7 @@ Use `X-Bootstrap-Token` from `.env` to create one organization, two users, and o
 POST /api/v1/bootstrap/sessions
 ```
 
-The existing integration test in `BackendFlowIntegrationTest` is the executable reference for this flow. It provisions an organization, sender, recipient, devices, a session, a direct ciphertext envelope, an inbox read, receipts, a room, attachment metadata, MDM sync, and audit export.
+The bootstrap token is onboarding-only. The existing integration test in `BackendFlowIntegrationTest` is the executable reference for this flow: it uses bootstrap for provisioning and bootstrap-session issuance, then uses bearer sessions for direct ciphertext envelopes, inbox reads, receipts, rooms, attachment metadata, MDM sync, and audit export.
 
 ## 3. Run the mobile demo
 
