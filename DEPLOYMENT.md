@@ -35,7 +35,7 @@ curl http://localhost:8080/actuator/health
 | `WEBAUTHN_RP_ID` | WebAuthn relying party ID. |
 | `WEBAUTHN_RP_NAME` | WebAuthn relying party display name. |
 | `WEBAUTHN_ALLOWED_ORIGINS` | Allowed WebAuthn origins. |
-| `BOOTSTRAP_TOKEN` | Temporary bootstrap token for initial setup. |
+| `BOOTSTRAP_TOKEN` | Temporary onboarding-only bootstrap token for initial org/user/device/session setup. |
 | `PORT` | Optional backend port; defaults to `8080`. |
 
 Do not use example values outside local development.
@@ -59,7 +59,7 @@ Before deploying beyond local development:
 - Use TLS at the ingress or load balancer.
 - Use non-default, rotated secrets.
 - Restrict actuator exposure.
-- Disable or rotate bootstrap credentials after initial setup.
+- Disable or rotate bootstrap credentials after initial setup; bootstrap is not an admin or governance credential.
 - Configure structured logging without request bodies.
 - Run dependency and container image scans.
 - Confirm Flyway migrations against staging data.
@@ -105,7 +105,7 @@ These manifests require environment-specific review for ingress class, TLS issue
 
 Do not deploy Crypta to production until:
 
-- WebAuthn/passkey finish verification is complete.
+- WebAuthn/passkey implementation has completed external review, including attestation trust policy.
 - Native mobile secure-key storage is complete.
 - Real direct and group cryptographic providers are integrated and reviewed.
 - Key transparency verification is implemented client-side.
@@ -117,7 +117,7 @@ Do not deploy Crypta to production until:
 ## Secret Management Recommendations
 
 - Store secrets in a dedicated secret manager.
-- Rotate bootstrap tokens immediately after setup.
+- Rotate bootstrap tokens immediately after setup and do not use them for admin, governance, key, message, room, attachment, or device-revocation workflows.
 - Use short-lived credentials where possible.
 - Never commit real secrets, private keys, tokens, credentials, or user data.
 - Keep `.env` local and untracked.
