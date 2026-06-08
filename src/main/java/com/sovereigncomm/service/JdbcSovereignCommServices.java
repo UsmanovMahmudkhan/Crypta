@@ -286,6 +286,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void revokeDevice(UUID deviceId, String reason) {
+        requireBearerActor("Device revocation");
         UUID orgId = organizationForDevice(deviceId);
         requireDeviceActorOrOrgAdmin(deviceId, orgId);
         jdbc.update("UPDATE devices SET trust_state = 'REVOKED', revoked_at = now(), revoke_reason = ? WHERE id = ?", reason, deviceId);
@@ -296,6 +297,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void uploadIdentityKey(PublicKeyUploadRequest request) {
+        requireBearerActor("Identity key upload");
         UUID orgId = organizationForDevice(request.deviceId());
         requireDeviceActor(request.deviceId());
         byte[] publicKey = decodeBase64(request.publicKeyBase64(), "publicKeyBase64");
@@ -567,6 +569,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void recordReceipt(DeliveryReceiptRequest request) {
+        requireBearerActor("Delivery receipt");
         requireDeviceActor(request.deviceId());
         requireMessageVisibleToDevice(request.messageId(), request.deviceId());
         jdbc.update("""
@@ -669,7 +672,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public IdResponse createEncryptedAttachment(AttachmentCreateRequest request) {
-        AuthenticatedActor actor = requireActor();
+        AuthenticatedActor actor = requireBearerActor("Attachment upload");
         UUID orgId = organizationForRoom(request.roomId());
         requireOrgAccess(actor, orgId);
         assertNoPlaintext(request.cryptoMetadata());
@@ -711,7 +714,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                     }
                     UUID organizationId = rs.getObject("organization_id", UUID.class);
                     UUID roomId = rs.getObject("room_id", UUID.class);
-                    AuthenticatedActor actor = requireActor();
+                    AuthenticatedActor actor = requireBearerActor("Attachment download");
                     requireOrgAccess(actor, organizationId);
                     requireRoomMember(actor, roomId);
                     Instant expiresAt = Instant.now().plus(5, ChronoUnit.MINUTES);
@@ -756,7 +759,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void exportAudit(AuditExportRequest request) {
-        requireOrgAccess(requireActor(), request.organizationId());
+        requireOrgAccess(requireBearerActor("Audit export"), request.organizationId());
         if (request.from() != null && request.to() != null && request.from().isAfter(request.to())) {
             throw new IllegalArgumentException("Audit export from must be before to");
         }
@@ -811,7 +814,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void recordSignedAction(String signedAdminActionEnvelope) {
-        AuthenticatedActor actor = requireActor();
+        AuthenticatedActor actor = requireBearerActor("Signed admin action");
         Map<String, Object> payload = fromJson(signedAdminActionEnvelope);
         UUID orgId = payload.containsKey("organizationId") ? UUID.fromString(String.valueOf(payload.get("organizationId"))) : actor.organizationId();
         requireOrgAccess(actor, orgId);
@@ -873,7 +876,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
 
     @Override
     public void syncDevicePosture(UUID organizationId) {
-        requireOrgAccess(requireActor(), organizationId);
+        requireOrgAccess(requireBearerActor("MDM sync"), organizationId);
         int compliant = jdbc.update("""
                         UPDATE devices d
                         SET mdm_compliant = true,
@@ -913,7 +916,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
             throw new IllegalArgumentException("normalizedAuditEventJson requires organizationId");
         }
         UUID organizationId = UUID.fromString(String.valueOf(organization));
-        requireOrgAccess(requireActor(), organizationId);
+        requireOrgAccess(requireBearerActor("SIEM export"), organizationId);
         UUID exportId = upsertSiemExport(organizationId, String.valueOf(normalizedEvent.getOrDefault("sinkType", "INLINE")));
         jdbc.update("""
                         INSERT INTO siem_export_events(siem_export_id, normalized_event, status)
@@ -926,7 +929,11 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void startLockdown(EmergencyLockdownRequest request) {
-        AuthenticatedActor actor = requireActor();
+        AuthenticatedActor actor = requireBearerActor("Emergency lockdown");
+        requireOrgAccess(actor, request.organizationId());
+        if (request.roomId() != null && !request.organizationId().equals(organizationForRoom(request.roomId()))) {
+            throw new SecurityException("Lockdown room must belong to the requested organization");
+        }
         UUID startedBy = actor.userId();
         if (startedBy == null) {
             startedBy = firstUserInOrg(request.organizationId());
@@ -945,7 +952,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public void endLockdown(UUID lockdownId, String reason) {
-        AuthenticatedActor actor = requireActor();
+        AuthenticatedActor actor = requireBearerActor("Emergency lockdown");
         UUID orgId = jdbc.query("SELECT organization_id FROM emergency_lockdowns WHERE id = ?",
                 rs -> {
                     if (!rs.next()) {
@@ -954,6 +961,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
                     return rs.getObject("organization_id", UUID.class);
                 },
                 lockdownId);
+        requireOrgAccess(actor, orgId);
         jdbc.update("UPDATE emergency_lockdowns SET ended_by = ?, ended_at = now() WHERE id = ?", actor.userId(), lockdownId);
         jdbc.update("""
                         UPDATE rooms SET lockdown_state = 'NORMAL'
@@ -1210,6 +1218,7 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     }
 
     private void uploadPrekey(String table, PreKeyUploadRequest request, boolean requiresSignature, boolean hasExpiry) {
+        requireBearerActor("Prekey upload");
         organizationForDevice(request.deviceId());
         requireDeviceActor(request.deviceId());
         byte[] publicKey = decodeBase64(request.publicKeyBase64(), "publicKeyBase64");
@@ -1347,7 +1356,10 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         AuthenticatedActor actor = requireActor();
         UUID orgId = organizationForDevice(deviceId);
         requireOrgAccess(actor, orgId);
-        if (!actor.bootstrap() && !deviceId.equals(actor.deviceId())) {
+        if (actor.bootstrap()) {
+            throw new SecurityException("Bearer session is required for device-scoped operations");
+        }
+        if (!deviceId.equals(actor.deviceId())) {
             throw new SecurityException("Device-scoped operation must match authenticated session");
         }
     }
@@ -1355,7 +1367,10 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     private void requireDeviceActorOrOrgAdmin(UUID deviceId, UUID orgId) {
         AuthenticatedActor actor = requireActor();
         requireOrgAccess(actor, orgId);
-        if (actor.bootstrap() || hasOrgAdminRole(actor) || deviceId.equals(actor.deviceId())) {
+        if (actor.bootstrap()) {
+            throw new SecurityException("Bearer session is required for device administration");
+        }
+        if (hasOrgAdminRole(actor) || deviceId.equals(actor.deviceId())) {
             return;
         }
         throw new SecurityException("Device owner or admin role is required");
@@ -1386,7 +1401,10 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     }
 
     private void requireRoomMember(AuthenticatedActor actor, UUID roomId) {
-        if (roomId == null || actor.bootstrap() || hasOrgAdminRole(actor)) {
+        if (actor.bootstrap()) {
+            throw new SecurityException("Bearer session is required for room access");
+        }
+        if (roomId == null || hasOrgAdminRole(actor)) {
             return;
         }
         Integer member = jdbc.queryForObject("""
