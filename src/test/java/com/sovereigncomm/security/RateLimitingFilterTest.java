@@ -32,8 +32,30 @@ class RateLimitingFilterTest {
                 .contains("\"requestId\":\"req-rate-limit\"");
     }
 
+    @Test
+    void separatesLimitsBySensitiveRouteBucket() throws ServletException, IOException {
+        RateLimitingFilter filter = new RateLimitingFilter(true, 1);
+
+        MockHttpServletResponse messageResponse = new MockHttpServletResponse();
+        filter.doFilter(request("POST", "/api/v1/messages/direct"), messageResponse, new MockFilterChain());
+
+        MockHttpServletResponse keyResponse = new MockHttpServletResponse();
+        filter.doFilter(request("POST", "/api/v1/keys/identity"), keyResponse, new MockFilterChain());
+
+        MockHttpServletResponse secondMessageResponse = new MockHttpServletResponse();
+        filter.doFilter(request("POST", "/api/v1/messages/receipts"), secondMessageResponse, new MockFilterChain());
+
+        assertThat(messageResponse.getStatus()).isEqualTo(200);
+        assertThat(keyResponse.getStatus()).isEqualTo(200);
+        assertThat(secondMessageResponse.getStatus()).isEqualTo(429);
+    }
+
     private MockHttpServletRequest request() {
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/messages/direct");
+        return request("POST", "/api/v1/messages/direct");
+    }
+
+    private MockHttpServletRequest request(String method, String path) {
+        MockHttpServletRequest request = new MockHttpServletRequest(method, path);
         request.setRemoteAddr("127.0.0.1");
         return request;
     }
