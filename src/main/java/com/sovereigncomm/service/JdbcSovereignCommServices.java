@@ -828,6 +828,48 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     }
 
     @Override
+    public Map<String, Object> transparencyMonitor(UUID organizationId) {
+        requireOrgAccess(requireBearerActor("Transparency monitor"), organizationId);
+        return jdbc.query("""
+                        SELECT count(*) AS entry_count, max(log_index) AS latest_index, max(created_at) AS latest_entry_at
+                        FROM key_transparency_entries
+                        WHERE organization_id = ?
+                        """,
+                rs -> {
+                    if (!rs.next()) {
+                        return Map.of("entryCount", 0, "latestLogIndex", -1);
+                    }
+                    return Map.of(
+                            "entryCount", rs.getLong("entry_count"),
+                            "latestLogIndex", rs.getObject("latest_index") == null ? -1 : rs.getLong("latest_index"),
+                            "latestEntryAt", rs.getTimestamp("latest_entry_at") == null ? "" : rs.getTimestamp("latest_entry_at").toInstant().toString(),
+                            "verifierMode", securityVerifierClient.remoteEnabled() ? "remote" : "local-fallback");
+                },
+                organizationId);
+    }
+
+    @Override
+    public SecurityVerifierClient.AuditVerificationResponse verifyAuditChain(UUID organizationId) {
+        requireOrgAccess(requireBearerActor("Audit chain verification"), organizationId);
+        return jdbc.query("""
+                        SELECT count(*) AS event_count, max(event_hash) AS latest_event_hash
+                        FROM audit_events
+                        WHERE organization_id = ?
+                        """,
+                rs -> {
+                    if (!rs.next()) {
+                        return new SecurityVerifierClient.AuditVerificationResponse(true, 0, "empty");
+                    }
+                    byte[] latest = rs.getBytes("latest_event_hash");
+                    return securityVerifierClient.verifyAuditChain(new SecurityVerifierClient.AuditVerificationRequest(
+                            organizationId,
+                            rs.getInt("event_count"),
+                            latest == null ? "" : Base64.getEncoder().encodeToString(latest)));
+                },
+                organizationId);
+    }
+
+    @Override
     public void syncDevicePosture(UUID organizationId) {
         requireOrgAccess(requireActor(), organizationId);
         int compliant = jdbc.update("""
@@ -1477,6 +1519,14 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
         AuthenticatedActor actor = actorOrNull();
         if (actor == null) {
             throw new SecurityException("Authenticated actor required");
+        }
+        return actor;
+    }
+
+    private AuthenticatedActor requireBearerActor(String operation) {
+        AuthenticatedActor actor = requireActor();
+        if (actor.bootstrap()) {
+            throw new SecurityException(operation + " requires a bearer session");
         }
         return actor;
     }
