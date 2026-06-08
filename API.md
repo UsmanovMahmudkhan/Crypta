@@ -5,44 +5,46 @@ This is a simplified manual overview of the REST API implemented by the Spring B
 Authentication notes:
 
 - `/actuator/health`, `/v3/api-docs/**`, and Swagger UI are public.
-- `/api/v1/webauthn/**` is public.
-- `POST /api/v1/organizations` and `POST /api/v1/users` require `PLATFORM_OPERATOR` or `ORG_ADMIN`, commonly via `X-Bootstrap-Token` during setup.
-- `/api/v1/admin/**` and `/api/v1/governance/**` require `PLATFORM_OPERATOR` or `ORG_ADMIN`.
+- WebAuthn login start/finish is public, but only verified credentials can issue sessions.
+- WebAuthn registration start/finish requires `X-Bootstrap-Token`, same-user bearer auth, or bearer admin auth.
+- `POST /api/v1/organizations` requires `X-Bootstrap-Token` or bearer `PLATFORM_OPERATOR`.
+- `POST /api/v1/users`, `POST /api/v1/devices`, and `POST /api/v1/bootstrap/sessions` support the bootstrap onboarding flow.
+- `/api/v1/admin/**` and `/api/v1/governance/**` require bearer `PLATFORM_OPERATOR` or `ORG_ADMIN`; bootstrap is not accepted.
 - Other API routes require a bearer session token unless otherwise noted.
 
 ## Organizations
 
 | Method | Path | Purpose | Auth | Request | Response | Security notes |
 | ------ | ---- | ------- | ---- | ------- | -------- | -------------- |
-| `POST` | `/api/v1/organizations` | Create an organization tenant. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `name`, `jurisdiction`, optional `externalTenantId`. | `id`, `createdAt`. | Intended for controlled bootstrap/admin use. |
+| `POST` | `/api/v1/organizations` | Create an organization tenant. | `X-Bootstrap-Token` or bearer `PLATFORM_OPERATOR`. | `name`, `jurisdiction`, optional `externalTenantId`. | `id`, `createdAt`. | Intended for controlled onboarding/platform use. |
 
 ## Users
 
 | Method | Path | Purpose | Auth | Request | Response | Security notes |
 | ------ | ---- | ------- | ---- | ------- | -------- | -------------- |
-| `POST` | `/api/v1/users` | Register a user in an organization. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `organizationId`, `email`, `displayName`, optional `roles`. | `id`, `createdAt`. | Non-bootstrap actors are restricted to their organization. |
+| `POST` | `/api/v1/users` | Register a user in an organization. | `X-Bootstrap-Token`, bearer `PLATFORM_OPERATOR`, or bearer `ORG_ADMIN`. | `organizationId`, `email`, `displayName`, optional `roles`. | `id`, `createdAt`. | Bearer actors are restricted to their organization unless platform-scoped. |
 
 ## Devices
 
 | Method | Path | Purpose | Auth | Request | Response | Security notes |
 | ------ | ---- | ------- | ---- | ------- | -------- | -------------- |
-| `POST` | `/api/v1/devices` | Register a device and attestation record. | Bearer token. | `userId`, `platform`, `deviceName`, `attestationFormat`, `attestationObjectBase64`, `deviceSigningPublicKeyBase64`. | `id`, `createdAt`. | Attestation is stored as pending external verification. |
+| `POST` | `/api/v1/devices` | Register a device and attestation record. | `X-Bootstrap-Token` or bearer token. | `userId`, `platform`, `deviceName`, `attestationFormat`, `attestationObjectBase64`, `deviceSigningPublicKeyBase64`. | `id`, `createdAt`. | Bootstrap may register onboarding devices; bearer actors are same-user or admin scoped. |
 | `DELETE` | `/api/v1/devices/{deviceId}` | Revoke a device. | Bearer token. | Path `deviceId`. | Empty response. | Revokes device trust state and API sessions for that device. |
 
 ## WebAuthn / Passkeys
 
 | Method | Path | Purpose | Auth | Request | Response | Security notes |
 | ------ | ---- | ------- | ---- | ------- | -------- | -------------- |
-| `POST` | `/api/v1/webauthn/registration/options/{userId}` | Start passkey registration. | Public. | Path `userId`. | Challenge and public key credential options. | Challenge is stored server-side. |
-| `POST` | `/api/v1/webauthn/registration/finish` | Finish passkey registration. | Public. | `userId`, optional `deviceId`, `credentialJson` containing the browser credential response. | Session response. | Validates challenge, origin, ceremony type, and replay state before storing credential material; audited authenticator signature verification remains future Yubico ceremony work. |
-| `POST` | `/api/v1/webauthn/login/options/{userId}` | Start passkey login. | Public. | Path `userId`. | Challenge and public key credential options. | Requires an existing credential record. |
+| `POST` | `/api/v1/webauthn/registration/options/{userId}` | Start passkey registration. | `X-Bootstrap-Token`, same-user bearer, or bearer admin. | Path `userId`. | Challenge and public key credential options. | Persists Yubico creation options with a short-lived challenge. |
+| `POST` | `/api/v1/webauthn/registration/finish` | Finish passkey registration. | `X-Bootstrap-Token`, same-user bearer, or bearer admin. | `userId`, optional `deviceId`, `credentialJson` containing the browser credential response. | Session response. | Uses Yubico ceremony verification and stores only `VERIFIED` credentials for login. |
+| `POST` | `/api/v1/webauthn/login/options/{userId}` | Start passkey login. | Public. | Path `userId`. | Challenge and public key credential options. | Requires an existing `VERIFIED` credential; legacy demo credentials are excluded. |
 | `POST` | `/api/v1/webauthn/login/finish` | Finish passkey login. | Public. | `userId`, optional `deviceId`, `credentialJson` containing the browser assertion response. | Session response. | Validates challenge, origin, ceremony type, replay state, and registered credential membership. |
 
 ## Bootstrap Sessions
 
 | Method | Path | Purpose | Auth | Request | Response | Security notes |
 | ------ | ---- | ------- | ---- | ------- | -------- | -------------- |
-| `POST` | `/api/v1/bootstrap/sessions` | Issue a bearer session for a bootstrapped user/device. | `X-Bootstrap-Token`. | `userId`, `deviceId`. | `userId`, `deviceId`, `token`, `expiresAt`. | Use only for local setup or controlled tenant bootstrap; rotate bootstrap tokens. |
+| `POST` | `/api/v1/bootstrap/sessions` | Issue a bearer session for a bootstrapped user/device. | `X-Bootstrap-Token`. | `userId`, `deviceId`. | `userId`, `deviceId`, `token`, `expiresAt`. | Bootstrap is onboarding-only and does not grant admin/governance access. Rotate after setup. |
 
 ## Keys
 
@@ -84,18 +86,18 @@ Authentication notes:
 
 | Method | Path | Purpose | Auth | Request | Response | Security notes |
 | ------ | ---- | ------- | ---- | ------- | -------- | -------------- |
-| `POST` | `/api/v1/admin/actions` | Record a signed admin action envelope. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Raw signed action envelope JSON string. | Empty response. | Envelope validation and dual control need hardening. |
-| `POST` | `/api/v1/admin/audit/export` | Request audit export. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `organizationId`, `sinkType`, optional `from`, optional `to`. | Empty response. | SIEM sink is configured out of band. |
-| `GET` | `/api/v1/admin/security/verifier` | Check verifier health. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | None. | Verifier status and mode. | Production readiness fails if verifier configuration is missing. |
-| `GET` | `/api/v1/admin/security/transparency-monitor/{organizationId}` | Check key transparency monitor status. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Path `organizationId`. | Entry count, latest log index, latest entry time, verifier mode. | Operational visibility endpoint. |
-| `POST` | `/api/v1/admin/security/audit/verify/{organizationId}` | Ask verifier to validate audit-chain checkpoint state. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Path `organizationId`. | Verification result and checkpoint ID. | Deeper audit replay remains a future verifier enhancement. |
-| `POST` | `/api/v1/admin/emergency-lockdowns` | Start org or room lockdown. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `organizationId`, optional `roomId`, `reason`, `scope`. | Empty response. | Blocks selected activity by org/room. |
-| `POST` | `/api/v1/admin/emergency-lockdowns/{lockdownId}/end` | End a lockdown. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Optional body with `reason`. | Empty response. | Requires careful audit review. |
+| `POST` | `/api/v1/admin/actions` | Record a signed admin action envelope. | Bearer `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Raw signed action envelope JSON string. | Empty response. | Envelope validation and dual control need hardening. |
+| `POST` | `/api/v1/admin/audit/export` | Request audit export. | Bearer `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `organizationId`, `sinkType`, optional `from`, optional `to`. | Empty response. | SIEM sink is configured out of band. |
+| `GET` | `/api/v1/admin/security/verifier` | Check verifier health. | Bearer `PLATFORM_OPERATOR` or `ORG_ADMIN`. | None. | Verifier status and mode. | Production readiness fails if verifier configuration is missing. |
+| `GET` | `/api/v1/admin/security/transparency-monitor/{organizationId}` | Check key transparency monitor status. | Bearer `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Path `organizationId`. | Entry count, latest log index, latest entry time, verifier mode. | Operational visibility endpoint. |
+| `POST` | `/api/v1/admin/security/audit/verify/{organizationId}` | Ask verifier to validate audit-chain checkpoint state. | Bearer `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Path `organizationId`. | Verification result and checkpoint ID. | Deeper audit replay remains a future verifier enhancement. |
+| `POST` | `/api/v1/admin/emergency-lockdowns` | Start org or room lockdown. | Bearer `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `organizationId`, optional `roomId`, `reason`, `scope`. | Empty response. | Blocks selected activity by org/room. |
+| `POST` | `/api/v1/admin/emergency-lockdowns/{lockdownId}/end` | End a lockdown. | Bearer `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Optional body with `reason`. | Empty response. | Requires careful audit review. |
 
 ## Governance
 
 | Method | Path | Purpose | Auth | Request | Response | Security notes |
 | ------ | ---- | ------- | ---- | ------- | -------- | -------------- |
-| `POST` | `/api/v1/governance/cql/parse` | Parse a CQL query. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Raw query string. | Parsed query object. | Parser is experimental. |
-| `POST` | `/api/v1/governance/cql/execute` | Execute a CQL query. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Raw query string. | List of allowlisted result rows. | Query execution is table and column allowlisted. |
-| `POST` | `/api/v1/governance/smalltalk/evaluate` | Evaluate a Smalltalk policy script. | `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `script`, `context`. | Evaluation result. | Disabled by default and in production unless explicitly enabled; applies script length and plaintext-shaped output checks. |
+| `POST` | `/api/v1/governance/cql/parse` | Parse a CQL query. | Bearer `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Raw query string. | Parsed query object. | Bootstrap is rejected; parser is experimental. |
+| `POST` | `/api/v1/governance/cql/execute` | Execute a CQL query. | Bearer `PLATFORM_OPERATOR` or `ORG_ADMIN`. | Raw query string. | List of allowlisted result rows. | Execution is organization-scoped, table/column allowlisted, parameterized, length-limited, and result-capped. |
+| `POST` | `/api/v1/governance/smalltalk/evaluate` | Evaluate a Smalltalk policy script. | Bearer `PLATFORM_OPERATOR` or `ORG_ADMIN`. | `script`, `context`. | Evaluation result. | Disabled by default and in production unless explicitly enabled; applies script length and recursive plaintext-shaped input/output checks. |
