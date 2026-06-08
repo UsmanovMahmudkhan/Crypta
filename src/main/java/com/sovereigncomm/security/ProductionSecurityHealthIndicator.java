@@ -3,6 +3,7 @@ package com.sovereigncomm.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -43,19 +44,19 @@ public class ProductionSecurityHealthIndicator implements HealthIndicator {
         }
         Health.Builder builder = Health.up().withDetail("mode", "prod");
         if (!verifierClient.remoteEnabled()) {
-            builder = Health.down().withDetail("verifier", "missing app.security.verifier.base-url");
+            builder.status(Status.DOWN).withDetail("verifier", "missing app.security.verifier.base-url");
         }
         if (tokenPepper.length() < 32) {
-            builder = Health.down().withDetail("tokenPepper", "must be at least 32 characters in prod");
+            builder.status(Status.DOWN).withDetail("tokenPepper", "must be at least 32 characters in prod");
         }
         if (bootstrapToken.length() < 32) {
-            builder = Health.down().withDetail("bootstrapToken", "must be at least 32 characters in prod");
+            builder.status(Status.DOWN).withDetail("bootstrapToken", "must be at least 32 characters in prod");
         }
         if (!requireVerifiedDevicesForSessions) {
-            builder = Health.down().withDetail("deviceSessionTrust", "verified devices must be required in prod");
+            builder.status(Status.DOWN).withDetail("deviceSessionTrust", "verified devices must be required in prod");
         }
         if (smalltalkGovernanceEnabled) {
-            builder = Health.down().withDetail("smalltalkGovernance", "experimental Smalltalk evaluation must stay disabled in prod");
+            builder.status(Status.DOWN).withDetail("smalltalkGovernance", "experimental Smalltalk evaluation must stay disabled in prod");
         }
         return builder.build();
     }
