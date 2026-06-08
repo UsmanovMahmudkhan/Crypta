@@ -206,6 +206,10 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public IdResponse createOrganization(OrganizationCreateRequest request) {
+        AuthenticatedActor actor = requireActor();
+        if (!actor.bootstrap() && !actor.hasRole("PLATFORM_OPERATOR")) {
+            throw new SecurityException("Platform operator role is required to create organizations");
+        }
         IdResponse response = returning("""
                         INSERT INTO organizations(name, jurisdiction, external_tenant_id)
                         VALUES (?, ?, ?)
@@ -219,10 +223,8 @@ class JdbcSovereignCommServices implements AuthService, OrganizationService, Use
     @Override
     @Transactional
     public IdResponse registerUser(UserRegisterRequest request) {
-        AuthenticatedActor actor = actorOrNull();
-        if (actor != null && !actor.bootstrap() && !request.organizationId().equals(actor.organizationId())) {
-            throw new SecurityException("Cannot create users outside the actor organization");
-        }
+        AuthenticatedActor actor = requireActor();
+        requireOrgAccess(actor, request.organizationId());
         IdResponse response = returning("""
                         INSERT INTO users(organization_id, email, display_name)
                         VALUES (?, ?, ?)
